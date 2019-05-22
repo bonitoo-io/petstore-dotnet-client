@@ -12,6 +12,11 @@ using Newtonsoft.Json;
 using Sensors.Dht;
 using Windows.Devices.Gpio;
 using BuildAzure.IoT.Adafruit.BME280;
+using System.ComponentModel;
+using System.Net.Sockets;
+using System.Net;
+using System.Text;
+using System.Diagnostics;
 
 // The Blank Page item template is documented at https://go.microsoft.com/fwlink/?LinkId=402352&clcid=0x409
 
@@ -25,12 +30,33 @@ namespace PetStoreClient
         public string authToken = null;
         public string bucket = null;
     }
+
+    class DiscoreryResult {
+        public string hubUrl;
+        public Exception error;
+
+        public DiscoreryResult(string hubUrl)
+        {
+            this.hubUrl = hubUrl;
+            this.error = null;
+        }
+
+        public DiscoreryResult(Exception error)
+        {
+            this.hubUrl = null;
+            this.error = error;
+        }
+    }
     /// <summary>
     /// An empty page that can be used on its own or navigated to within a Frame.
     /// </summary>
     public sealed partial class MainPage : Page
     {
-        private static int DHT22_PIN = 17;
+        private const int DHT22_Pin = 17;
+        private const int DiscoveryListenPort = 4445;
+        private const string PetStoreHubUrlPrefix = "[petstore.hubUrl=";
+        private static IPAddress GroupAddress = IPAddress.Parse("239.0.0.2");
+
         private Bmp180Sensor bmp180;
         private BME280Sensor bme280;
         private Timer periodicTimer;
@@ -38,6 +64,9 @@ namespace PetStoreClient
         private DbConfig config;
         private GpioPin dhtPin = null;
         private IDht dhtSensor = null;
+        private bool bme280ForceMode = false;
+        private string hubUrl;
+        private BackgroundWorker hubDiscoveryWorker;
 
 
         public MainPage()
@@ -45,14 +74,141 @@ namespace PetStoreClient
             this.InitializeComponent();
 
             Unloaded += MainPage_Unloaded;
+            Loaded += MainPage_Loaded;
 
             // Initialize the Sensors
             InitializeSensors();
+            
         }
+
+        private void MainPage_Loaded(object sender, RoutedEventArgs e)
+        {
+            InitializeBackgroundWorker();
+        }
+
+        private void InitializeBackgroundWorker()
+        {
+            hubDiscoveryWorker = new BackgroundWorker();
+            hubDiscoveryWorker.WorkerSupportsCancellation = true;
+            hubDiscoveryWorker.WorkerReportsProgress = false;
+            hubDiscoveryWorker.DoWork += HubDiscoveryWorker_DoWork;
+            hubDiscoveryWorker.RunWorkerCompleted += HubDiscoveryWorker_RunWorkerCompleted;
+            hubDiscoveryWorker.RunWorkerAsync();
+            UpdateStatus("Started hub discovery");
+        }
+
+        private void HubDiscoveryWorker_DoWork(object sender, DoWorkEventArgs e)
+        {
+            Socket socket = null;
+            var buffer = new byte[1024];
+            try
+            {
+                socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
+
+                socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
+
+                var ipAddress = IPAddress.Any;
+                //var ipAddress = IPAddress.Parse("192.168.10.246");
+                
+                var endPoint = new IPEndPoint(ipAddress, DiscoveryListenPort);
+                
+
+                socket.Bind(endPoint);
+                socket.SetSocketOption(SocketOptionLevel.IP, SocketOptionName.AddMembership, new MulticastOption(GroupAddress, ipAddress));
+
+                Debug.WriteLine("Waiting for broadcast");
+                while (!hubDiscoveryWorker.CancellationPending)
+                {
+
+                    if (socket.Available > 0)
+                    {
+
+                        int receivedLength = socket.Receive(buffer);
+
+                        if (receivedLength == 0)
+                        {
+                            break;
+                        }
+
+                        if (receivedLength < 0)
+                        {
+                            continue;
+                        }
+                        string message = Encoding.ASCII.GetString(buffer, 0, receivedLength);
+                        if (message.StartsWith(PetStoreHubUrlPrefix))
+                        {
+                            var url = message.Substring(PetStoreHubUrlPrefix.Length, message.Length - PetStoreHubUrlPrefix.Length - 1);
+                            Debug.WriteLine(string.Format("PetStore hub url: {0}", url));
+                            e.Result = new DiscoreryResult(url);
+                            break;
+                        }
+                        else
+                        {
+                            Debug.WriteLine(string.Format("Received: {0}", message));
+                        }
+                    }
+                    Thread.Sleep(5000);
+                }
+                
+            }
+            catch (SocketException ex)
+            {
+                Debug.WriteLine(e);
+                e.Result = new DiscoreryResult(ex);
+            }
+            finally
+            {
+                if (socket != null)
+                {
+                    socket.Dispose();
+                    socket = null;
+                }
+
+
+            }
+            if(hubDiscoveryWorker.CancellationPending)
+            {
+                e.Cancel = true;
+            }
+                
+        }
+
+        private void HubDiscoveryWorker_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
+        {
+            var status = "";
+            if(e.Result != null )
+            {
+                var discoveryResult = e.Result as DiscoreryResult;
+                if(discoveryResult.hubUrl != null )
+                {
+                    hubUrl = discoveryResult.hubUrl;
+                    status = "Discoverered hub url: " + hubUrl;
+                } else
+                {
+                    status = "Discoverery error: " + discoveryResult.error.Message;
+                }
+
+            }
+            if(e.Cancelled)
+            {
+                status = "Discoverery canceled";
+            }
+            UpdateStatus(status);
+
+        }
+
+
         private void MainPage_Unloaded(object sender, object args)
         {
             /* Cleanup */
-            bmp180.Dispose();
+            if (bmp180 != null) {
+                bmp180.Dispose();
+            }
+            if(dBClient != null)
+            {
+                dBClient.Dispose();
+            }
+
         }
 
         private async void InitializeSensors()
@@ -77,12 +233,15 @@ namespace PetStoreClient
                 // Initialize BME280 Sensor
                 await bme280.Initialize(0x76);
 
-                await bme280.SetSampling(SensorMode.MODE_FORCED,
-                    SensorSampling.SAMPLING_X1, // temperature
-                    SensorSampling.SAMPLING_X1, // pressure
-                    SensorSampling.SAMPLING_X1, // humidity
-                    SensorFilter.FILTER_OFF,
-                    StandbyDuration.STANDBY_MS_1000);
+                if (bme280ForceMode)
+                {
+                    await bme280.SetSampling(SensorMode.MODE_FORCED,
+                        SensorSampling.SAMPLING_X1, // temperature
+                        SensorSampling.SAMPLING_X1, // pressure
+                        SensorSampling.SAMPLING_X1, // humidity
+                        SensorFilter.FILTER_OFF,
+                        StandbyDuration.STANDBY_MS_1000);
+                }
             }
             catch (Exception ex)
             {
@@ -98,7 +257,7 @@ namespace PetStoreClient
             {
 
                 GpioController controller = GpioController.GetDefault();
-                dhtPin = GpioController.GetDefault().OpenPin(DHT22_PIN, GpioSharingMode.Exclusive);
+                dhtPin = GpioController.GetDefault().OpenPin(DHT22_Pin, GpioSharingMode.Exclusive);
                 dhtSensor = new Dht22(dhtPin, GpioPinDriveMode.InputPullUp);
             }
             catch (Exception ex)
@@ -110,11 +269,14 @@ namespace PetStoreClient
                 }
                 status += "DHT 22 error: " + ex.Message;
             }
-            // UI updates must be invoked on the UI thread
-            var task = this.Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () =>
+            if (status.Length > 0)
             {
-                statusTextBlock.Text = status;
-            });
+                // UI updates must be invoked on the UI thread
+                var task = this.Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () =>
+                {
+                    statusTextBlock.Text = status;
+                });
+            }
 
         }
 
@@ -153,9 +315,9 @@ namespace PetStoreClient
 
         private void TimerCallback(object state)
         {
-            if (config == null)
+            if (config == null && hubUrl != null)
             {
-                Subscribe();
+                Subscribe(hubUrl);
             }
              ReadData();
            
@@ -205,7 +367,10 @@ namespace PetStoreClient
             try { 
                 if (bme280 != null)
                 {
-                    await bme280.TakeForcedMeasurement();
+                    if (bme280ForceMode)
+                    {
+                        await bme280.TakeForcedMeasurement();
+                    }
 
                     // Read Temperature
                     var bme280Temp = await bme280.ReadTemperature();
@@ -297,7 +462,10 @@ namespace PetStoreClient
 
                 dhtHumTextBlock.Text = dhtHumText;
                 dhtTempTextBlock.Text = dhtTempText;
-                statusTextBlock.Text = status;
+                if (status.Length > 0)
+                {
+                    statusTextBlock.Text = status;
+                }
             });
         }
 
@@ -309,11 +477,11 @@ namespace PetStoreClient
             });
         }
 
-        private void Subscribe()
+        private void Subscribe(string url)
         {
             var status = "";
             //todo: url to ui
-            RestClient hubClient = new RestClient("http://192.168.1.72:8080/api");
+            RestClient hubClient = new RestClient(url);
             
 
             var request = new RestRequest("register/{id}", Method.GET);
@@ -348,9 +516,6 @@ namespace PetStoreClient
 
             }
             UpdateStatus(status);
-
-
-
         }
 
         private void InitializeDb()
@@ -373,14 +538,12 @@ namespace PetStoreClient
 
         private void WriteToDb(double temp, double press, double humidity)
         {
-            var status = "Updating";
-            UpdateStatus(status);
-            try
+            if (dBClient != null)
             {
-                if(dBClient != null)
+                var status = "Updating";
+                UpdateStatus(status);
+                try
                 {
-                    
-                    //
                     var point = Point.Measurement("air")
                         .Tag("room", "prosek")
                         .Tag("device", config.deviceId)
@@ -391,16 +554,15 @@ namespace PetStoreClient
                     writeClient.WritePoint(config.bucket, config.orgId, point);
                     writeClient.Flush();
                     status = "";
-                } else
-                {
-                    throw new Exception("Not initialized db client");
-                }
 
-            } catch(Exception ex)
-            {
-                status = "Error: " + ex.Message;
+
+                }
+                catch (Exception ex)
+                {
+                    status = "Error: " + ex.Message;
+                }
+                UpdateStatus(status);
             }
-            UpdateStatus(status);
         }
 
         //"B827 EBD4 17DE"
