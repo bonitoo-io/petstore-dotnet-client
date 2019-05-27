@@ -15,5 +15,4 @@ TEST_LOG*.*
 *.stash
 *.*Store
 *.vcx*
-*.sln
 *.user
