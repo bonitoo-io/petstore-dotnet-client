@@ -119,11 +119,24 @@
     <Compile Include="App.xaml.cs">
       <DependentUpon>App.xaml</DependentUpon>
     </Compile>
+    <Compile Include="BasicPage.xaml.cs">
+      <DependentUpon>BasicPage.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="DbConfig.cs" />
+    <Compile Include="DetailData.cs" />
+    <Compile Include="BasicData.cs" />
+    <Compile Include="BindableBase.cs" />
     <Compile Include="Bmp180Sensor.cs" />
+    <Compile Include="Converters.cs" />
+    <Compile Include="HubDiscoveryWorker.cs" />
+    <Compile Include="InfluxDbWorker.cs" />
     <Compile Include="MainPage.xaml.cs">
       <DependentUpon>MainPage.xaml</DependentUpon>
     </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="SensorsWorker.cs" />
+    <Compile Include="SubscriptionWorker.cs" />
+    <Compile Include="WorkersManager.cs" />
   </ItemGroup>
   <ItemGroup>
     <AppxManifest Include="Package.appxmanifest">
@@ -150,6 +163,10 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Page Include="BasicPage.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="MainPage.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>

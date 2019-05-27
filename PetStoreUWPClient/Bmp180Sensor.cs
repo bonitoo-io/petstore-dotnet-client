@@ -3,7 +3,7 @@ using System.Threading.Tasks;
 using Windows.Devices.Enumeration;
 using Windows.Devices.I2c;
 
-namespace PetStoreClient
+namespace PetStoreUWPClient
 {
     public class Bmp180Sensor: IDisposable
     {
