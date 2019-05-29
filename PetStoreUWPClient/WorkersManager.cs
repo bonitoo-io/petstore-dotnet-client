@@ -14,6 +14,7 @@ namespace PetStoreUWPClient
         public SubscriptionWorker SubscriptionWorker { get; private set; }
         public InfluxDbWorker InfluxDbWorker { get; private set; }
         private bool running;
+        private SubscriptionStatus lastStatus = SubscriptionStatus.None;
 
         private static WorkersManager instance;
 
@@ -35,20 +36,19 @@ namespace PetStoreUWPClient
         {
             if (!running)
             {
+                Debug.WriteLine("WorkersManager:Start");
                 OnStatusChanged("Starting..");
                 await StartSensorsReading();
-                if (!Config.GetInstance().IsDbConfigAvailable())
+
+                if (Config.GetInstance().hubUrl != null)
                 {
-                    if (Config.GetInstance().hubUrl != null)
-                    {
-                        StartSubscriptionWorker(Config.GetInstance().hubUrl);
-                    }
-                    else
-                    {
-                        StartHubDiscovery();
-                    }
+                    StartSubscriptionWorker(Config.GetInstance().hubUrl);
                 }
                 else
+                {
+                    StartHubDiscovery();
+                }
+                if (Config.GetInstance().IsDbConfigAvailable())
                 {
                     StartDbWorker();
                 }
@@ -60,6 +60,7 @@ namespace PetStoreUWPClient
         {
             if (running)
             {
+                Debug.WriteLine("WorkersManager:Stop");
                 OnStatusChanged("Stopping workers");
                 StopDbWorker();
                 StopSubscriptionWorker();
@@ -85,6 +86,12 @@ namespace PetStoreUWPClient
                 OnStatusChanged("Stopped workers");
                 running = false;
             }
+        }
+
+        public async Task Restart()
+        {
+            await Stop();
+            await Start();
         }
 
         private void StartHubDiscovery()
@@ -200,7 +207,13 @@ namespace PetStoreUWPClient
 
         private void SubscriptionWorker_SubscriptionStatusChanged(object sender, SubscriptionStatusUpdatedEventArgs e)
         {
-            OnStatusChanged(SubscriptionWorker.SubscriptionStatusToString(e.Status));
+            if (e.Status != SubscriptionStatus.Subscribed)
+            {
+                OnStatusChanged(SubscriptionWorker.SubscriptionStatusToString(e.Status));
+            } else
+            {
+                OnStatusChanged("");
+            }
             if(e.Status == SubscriptionStatus.Accepted || e.Status == SubscriptionStatus.Subscribed)
             {
                 if(!Config.GetInstance().IsDbConfigAvailable())
@@ -212,7 +225,20 @@ namespace PetStoreUWPClient
                     StartDbWorker();
                 }
             } 
+            if(e.Status == SubscriptionStatus.WaitingForAuthorization && lastStatus != SubscriptionStatus.WaitingForAuthorization)
+            {
+                var config = Config.GetInstance();
+                config.ResetDbSettings();
+                config.Save();
+#pragma warning disable CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
+                Restart();
+#pragma warning restore CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
+
+            }
+            lastStatus = e.Status;
         }
+
+
 
         protected void OnStatusChanged(string status)
         {
