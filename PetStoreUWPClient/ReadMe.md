@@ -10,7 +10,7 @@
 1. Build & Deploy
 
 ## Sensors
-**BME280** (also BMP180) is I2C slave, so connect I2C of RPI:
+**BME280** (also BMP180) is I2C slave, so connect it to I2C of RPI:
  - GND c (GND)
  - SDA to RPI GPIO pin 3 (I2C SDA) 
  - SDC to RPI GPIO pin 5 (I2C SDC) 
