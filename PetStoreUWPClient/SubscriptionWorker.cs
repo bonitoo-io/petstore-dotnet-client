@@ -10,6 +10,7 @@ namespace PetStoreUWPClient
 {
     public enum SubscriptionStatus
     {
+        None,
         WaitingForAuthorization,
         Accepted,
         Subscribed,
@@ -21,27 +22,37 @@ namespace PetStoreUWPClient
         private BackgroundWorker subscriptionWorker;
         private string hubUrl;
         private int delay;
+        private SubscriptionStatus lastStatus;
 
+        public bool Running { get; private set; }
         public string ErrorString { get; private set; }
+
 
         public SubscriptionWorker(string hubUrl, int delay = 15000)
         {
             this.hubUrl = hubUrl;
             this.delay = delay;
+            lastStatus = SubscriptionStatus.None;
             subscriptionWorker = new BackgroundWorker();
             subscriptionWorker.WorkerSupportsCancellation = true;
-            subscriptionWorker.RunWorkerCompleted += ReadingWorker_RunWorkerCompleted;
             subscriptionWorker.DoWork += ReadingWorker_DoWork;
         }
 
         public void Start()
         {
             subscriptionWorker.RunWorkerAsync();
+            
+        }
+
+        public void Stop()
+        {
+            subscriptionWorker.CancelAsync();
         }
 
         private void ReadingWorker_DoWork(object sender, DoWorkEventArgs e)
         {
-            while(!subscriptionWorker.CancellationPending)
+            Running = true;
+            while (!subscriptionWorker.CancellationPending)
             {
                 Subscribe();
                 Thread.Sleep(delay);
@@ -50,16 +61,12 @@ namespace PetStoreUWPClient
             {
                 e.Cancel = true;
             }
-        }
-
-        private void ReadingWorker_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
-        {
-            
+            Running = false;
         }
 
         private void Subscribe()
         {
-            var status = SubscriptionStatus.Error;
+            var status = SubscriptionStatus.None;
             //todo: url to ui
             RestClient hubClient = new RestClient(hubUrl);
 
@@ -74,7 +81,7 @@ namespace PetStoreUWPClient
             if (response.ErrorException != null)
             {
                 status = SubscriptionStatus.Error;
-                ErrorString = "Error: " + response.ErrorException.Message;
+                ErrorString = "Subscription error: " + response.ErrorException.Message;
                 Debug.WriteLine("SubscriptionWorker:Subscribe:Error: " + ErrorString);
             }
             else
@@ -84,8 +91,8 @@ namespace PetStoreUWPClient
                 {
                     case System.Net.HttpStatusCode.OK:
                         status = SubscriptionStatus.Accepted;// "Device accepted";
-                        DbConfig.GetInstance().InitFromJson(response.Content);
-                        DbConfig.GetInstance().Save();
+                        Config.GetInstance().InitFromJson(response.Content);
+                        Config.GetInstance().Save();
                         break;
                     case System.Net.HttpStatusCode.Created:
                         status = SubscriptionStatus.WaitingForAuthorization;// "Waiting for device authorization";
@@ -101,7 +108,11 @@ namespace PetStoreUWPClient
                 }
 
             }
-            OnSubscriptionStatusChanged(status);
+            if (status != lastStatus)
+            {
+                lastStatus = status;
+                OnSubscriptionStatusChanged(status);
+            }
         }
 
         public string SubscriptionStatusToString(SubscriptionStatus status)

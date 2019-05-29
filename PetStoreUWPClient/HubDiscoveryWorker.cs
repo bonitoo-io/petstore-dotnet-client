@@ -36,6 +36,7 @@ namespace PetStoreUWPClient
         private const string PetStoreHubUrlPrefix = "[petstore.hubUrl=";
         private static IPAddress GroupAddress = IPAddress.Parse("239.0.0.2");
 
+        public bool Running { get; private set; }
 
         public HubDiscoveryWorker()
         {
@@ -51,8 +52,15 @@ namespace PetStoreUWPClient
             hubDiscoveryWorker.RunWorkerAsync();
         }
 
+        public void Stop()
+        {
+            hubDiscoveryWorker.CancelAsync();
+        }
+
         private void HubDiscoveryWorker_DoWork(object sender, DoWorkEventArgs e)
         {
+            Debug.WriteLine("HubDiscoveryWorker:Started");
+            Running = true;
             Socket socket = null;
             var buffer = new byte[1024];
             try
@@ -126,8 +134,11 @@ namespace PetStoreUWPClient
             if (hubDiscoveryWorker.CancellationPending)
             {
                 e.Cancel = true;
+                Debug.WriteLine("Discovery canceled");
             }
 
+            Running = true;
+            Debug.WriteLine("HubDiscoveryWorker:Stopped");
         }
 
         private void HubDiscoveryWorker_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)

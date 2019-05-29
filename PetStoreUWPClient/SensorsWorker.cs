@@ -25,6 +25,8 @@ namespace PetStoreUWPClient
         private IDht dhtSensor = null;
         private bool bme280ForceMode = true;
 
+        public bool Running { get; private set; }
+
         public SensorsWorker(int delay)
         {
             readingWorker = new BackgroundWorker();
@@ -50,10 +52,11 @@ namespace PetStoreUWPClient
         {
             Debug.WriteLine("SensorsWorker:InitSensors start");
             string status = "";
-
+            OnStatusChanged("Initialising sensors");
             // Initialize the BMP180 Sensor
             try
             {
+                OnStatusChanged("Initialising sensors..BMP180");
                 bmp180 = new Bmp180Sensor();
                 await bmp180.InitializeAsync();
             }
@@ -65,6 +68,7 @@ namespace PetStoreUWPClient
 
             try
             {
+                OnStatusChanged("Initialising sensors..BME280");
                 bme280 = new BME280Sensor();
                 // Initialize BME280 Sensor
                 await bme280.Initialize(0x76);
@@ -91,7 +95,7 @@ namespace PetStoreUWPClient
 
             try
             {
-
+                OnStatusChanged("Initialising sensors..DHT22");
                 GpioController controller = GpioController.GetDefault();
                 dhtPin = GpioController.GetDefault().OpenPin(DHT22_Pin, GpioSharingMode.Exclusive);
                 dhtSensor = new Dht22(dhtPin, GpioPinDriveMode.InputPullUp);
@@ -105,9 +109,7 @@ namespace PetStoreUWPClient
                 }
                 status += "DHT 22 error: " + ex.Message;
             }
-            if (status.Length > 0) {
-                OnStatusChanged(status);
-            }
+            OnStatusChanged(status);
             Debug.WriteLine("SensorsWorker:InitSensors end");
             return bmp180 != null || bme280 != null || dhtSensor != null;
             
@@ -116,7 +118,8 @@ namespace PetStoreUWPClient
         private void ReadingWorker_DoWork(object sender, DoWorkEventArgs e)
         {
             Debug.WriteLine("SensorWorker:ReadingWorker started");
-            while(!readingWorker.CancellationPending)
+            Running = true;
+            while (!readingWorker.CancellationPending)
             {
                 ReadData().GetAwaiter().GetResult();
                 Thread.Sleep(readingDelay);
@@ -125,12 +128,28 @@ namespace PetStoreUWPClient
             {
                 e.Cancel = true;
             }
+            DeinitSensors();
+            Running = false;
+            Debug.WriteLine("SensorWorker:ReadingWorker stopped");
+        }
+
+        private void DeinitSensors()
+        {
             if (bmp180 != null)
             {
                 bmp180.Dispose();
+                bmp180 = null;
             }
-            Debug.WriteLine("SensorWorker:ReadingWorker stopped");
-
+            if (bme280 != null)
+            {
+                bme280 = null;
+            }
+            if (dhtSensor != null)
+            {
+                dhtSensor = null;
+                dhtPin.Dispose();
+                dhtPin = null;
+            }
         }
 
         private async Task ReadData()

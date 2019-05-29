@@ -17,6 +17,7 @@ using System.Net.Sockets;
 using System.Net;
 using System.Text;
 using System.Diagnostics;
+using Windows.UI.Xaml.Media.Animation;
 
 // The Blank Page item template is documented at https://go.microsoft.com/fwlink/?LinkId=402352&clcid=0x409
 
@@ -36,6 +37,7 @@ namespace PetStoreUWPClient
 
         public MainPage()
         {
+            SetUpPageAnimation();
             this.InitializeComponent();
 
             Unloaded += MainPage_Unloaded;
@@ -50,11 +52,11 @@ namespace PetStoreUWPClient
         private void MainPage_Loaded(object sender, RoutedEventArgs e)
         {
             WorkersManager man = WorkersManager.GetWorkersManager();
-            man.SensorsWorker.StatusChanged += SensorsWorker_StatusChanged;
+            man.StatusChanged += StatusChanged;
 
         }
 
-        private void SensorsWorker_StatusChanged(object sender, StatusUpdatedEventArgs e)
+        private void StatusChanged(object sender, StatusUpdatedEventArgs e)
         {
             ViewModel.Status = e.Status;
         }
@@ -63,14 +65,27 @@ namespace PetStoreUWPClient
         {
 
             WorkersManager man = WorkersManager.GetWorkersManager();
-            man.SensorsWorker.StatusChanged -= SensorsWorker_StatusChanged;
+            man.StatusChanged -= StatusChanged;
 
         }
+
+        private void SetUpPageAnimation()
+        {
+            TransitionCollection collection = new TransitionCollection();
+            NavigationThemeTransition theme = new NavigationThemeTransition();
+
+            var info = new ContinuumNavigationTransitionInfo();
+
+            theme.DefaultNavigationTransitionInfo = info;
+            collection.Add(theme);
+            this.Transitions = collection;
+        }
+
 
         private void button_Click(object sender, RoutedEventArgs e)
         {
 
-            this.Frame.Navigate(typeof(BasicPage));
+            this.Frame.Navigate(typeof(BasicPage), null, new SuppressNavigationTransitionInfo());
             
         }
 

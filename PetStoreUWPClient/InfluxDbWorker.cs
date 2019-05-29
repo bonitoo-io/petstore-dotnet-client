@@ -17,6 +17,8 @@ namespace PetStoreUWPClient
         private InfluxDBClient dBClient;
         private int delay;
 
+        public bool Running { get; private set; }
+
         public InfluxDbWorker(int delay = 30000)
         {
             this.delay = delay;
@@ -34,8 +36,15 @@ namespace PetStoreUWPClient
             dbWorker.RunWorkerAsync();
         }
 
+        public void Stop()
+        {
+            dbWorker.CancelAsync();
+        }
+
         private void DbWorker_DoWork(object sender, DoWorkEventArgs e)
         {
+            Debug.WriteLine("InfluxDbWorker:Started");
+            Running = true;
             while (!dbWorker.CancellationPending)
             {
                 if (dBClient != null)
@@ -49,11 +58,13 @@ namespace PetStoreUWPClient
             {
                 e.Cancel = true;
             }
+            Running = false;
+            Debug.WriteLine("InfluxDbWorker:Stopped");
         }
 
         private void InitializeDb()
         {
-            var dbConfig = DbConfig.GetInstance();
+            var dbConfig = Config.GetInstance();
             if (dBClient == null && dbConfig.IsDbConfigAvailable())
             {
                 try
@@ -64,7 +75,7 @@ namespace PetStoreUWPClient
                 }
                 catch (Exception ex)
                 {
-                    OnStatusChanged("Error: " + ex.Message);
+                    OnStatusChanged("DB Error: " + ex.Message);
                 }
             }
         }
@@ -78,7 +89,7 @@ namespace PetStoreUWPClient
                 {
                     Debug.WriteLine("InfluxDbWorker:WriteToDb");
                     var data = BasicData.GetBasicData();
-                    var dbConfig = DbConfig.GetInstance();
+                    var dbConfig = Config.GetInstance();
                     var point = Point.Measurement("air")
                         .Tag("room", dbConfig.location!=null? dbConfig.location:"prosek")
                         .Tag("device", dbConfig.deviceId)
@@ -91,7 +102,7 @@ namespace PetStoreUWPClient
                 }
                 catch (Exception ex)
                 {
-                    OnStatusChanged("Error: " + ex.Message);
+                    OnStatusChanged("DB Error: " + ex.Message);
                 }
             }
         }
@@ -152,7 +163,7 @@ namespace PetStoreUWPClient
                 }
                 catch (Exception ex)
                 {
-                    OnStatusChanged("Error: " + ex.Message);
+                    OnStatusChanged("DB Error: " + ex.Message);
                 }
 
             }
@@ -160,7 +171,7 @@ namespace PetStoreUWPClient
 
         private double GetQueryResult(string field, string function)
         {
-            var dbConfig = DbConfig.GetInstance();
+            var dbConfig = Config.GetInstance();
             var location = dbConfig.location != null ? dbConfig.location : "prosek";
             var fluxTables = dBClient.GetQueryApi().Query(string.Format(FluxQueryTemplate, dbConfig.bucket, field, location, function), dbConfig.orgId);
             object value = null;
