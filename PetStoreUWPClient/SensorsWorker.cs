@@ -51,7 +51,6 @@ namespace PetStoreUWPClient
         private async Task<bool> InitSensors()
         {
             Debug.WriteLine("SensorsWorker:InitSensors start");
-            string status = "";
             OnStatusChanged("Initialising sensors");
             // Initialize the BMP180 Sensor
             try
@@ -60,10 +59,9 @@ namespace PetStoreUWPClient
                 bmp180 = new Bmp180Sensor();
                 await bmp180.InitializeAsync();
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 bmp180 = null;
-                status = "BMP 180 error: " + ex.Message;
             }
 
             try
@@ -83,14 +81,9 @@ namespace PetStoreUWPClient
                         StandbyDuration.STANDBY_MS_1000);
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 bme280 = null;
-                if (status.Length > 0)
-                {
-                    status += "\n";
-                }
-                status += "BME 280 error: " + ex.Message;
             }
 
             try
@@ -100,17 +93,41 @@ namespace PetStoreUWPClient
                 dhtPin = GpioController.GetDefault().OpenPin(DHT22_Pin, GpioSharingMode.Exclusive);
                 dhtSensor = new Dht22(dhtPin, GpioPinDriveMode.InputPullUp);
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 dhtSensor = null;
-                if (status.Length > 0)
+            }
+            string status = "";
+            if (bmp180 != null || bme280 != null || dhtSensor != null)
+            {
+                if(bmp180 != null)
                 {
-                    status += "\n";
+                    status += "BMP180";
                 }
-                status += "DHT 22 error: " + ex.Message;
+                if (bme280 != null)
+                {
+                    if(status.Length > 0)
+                    {
+                        status += ", ";
+                    }
+                    status += "BME280";
+                }
+                if (dhtSensor != null)
+                {
+                    if (status.Length > 0)
+                    {
+                        status += ", ";
+                    }
+                    status += "DHT22";
+                }
+                status = $"Found: {status} sensors";
+            } else
+            {
+                status = "No sensor found";
             }
             OnStatusChanged(status);
-            Debug.WriteLine("SensorsWorker:InitSensors end");
+            await Task.Delay(500);
+            Debug.WriteLine($"SensorsWorker:InitSensors end: {status}");
             return bmp180 != null || bme280 != null || dhtSensor != null;
             
         }
@@ -142,6 +159,7 @@ namespace PetStoreUWPClient
             }
             if (bme280 != null)
             {
+                bme280.Dispose();
                 bme280 = null;
             }
             if (dhtSensor != null)
