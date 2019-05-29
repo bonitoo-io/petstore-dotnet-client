@@ -36,12 +36,17 @@ namespace PetStoreUWPClient
         public void Reset()
         {
             hubUrl = null;
+            location = null;
             deviceId = null;
+            ResetDbSettings();
+        }
+
+        public void ResetDbSettings()
+        {
             url = null;
             orgId = null;
             authToken = null;
             bucket = null;
-            location = null;
         }
 
         public bool IsDbConfigAvailable()
@@ -88,6 +93,7 @@ namespace PetStoreUWPClient
             localSettings.Values["authToken"] = ValueOrNull(authToken);
             localSettings.Values["location"] = ValueOrNull(location);
             localSettings.Values["hubUrl"] = ValueOrNull(hubUrl);
+            localSettings.Values["deviceId"] = ValueOrNull(deviceId);
         }
 
         private static string ValueOrNull(string val)
@@ -97,7 +103,7 @@ namespace PetStoreUWPClient
 
         public override string ToString()
         {
-            return $"Config:\n\tdbUrl: {url}\n\torgId: {orgId}\n\tbucket: {bucket}\n\tauthToken: {authToken}\n\tlocation: {location}\n\thubUrl: {hubUrl}\n";
+            return $"Config:\n\tdbUrl: {url}\n\torgId: {orgId}\n\tbucket: {bucket}\n\tauthToken: {authToken}\n\tlocation: {location}\n\thubUrl: {hubUrl}\n\tdeviceId: {deviceId}\n";
         }
     }
 }
