@@ -253,22 +253,15 @@ namespace PetStoreUWPClient
                 detailData.DhtHumidity = double.NaN;
             }
             
-            try
-            {
-                //calculate average
-                avgTemp /= tempCount;
-                avgHum /= humCount;
-                avgPres /= presCount;
+           
+            //calculate average
+            avgTemp /= tempCount;
+            avgHum /= humCount;
+            avgPres /= presCount;
 
-                basicData.CurrentTemperature = avgTemp;
-                basicData.CurrentHumidity = avgHum;
-                basicData.CurrentPressure = avgPres;
-
-            }
-            catch (Exception ex)
-            {
-                status = "DB Error: " + ex.Message;
-            }
+            basicData.CurrentTemperature = avgTemp;
+            basicData.CurrentHumidity = avgHum;
+            basicData.CurrentPressure = avgPres;
 
 
             if (status.Length > 0)
