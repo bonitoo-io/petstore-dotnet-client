@@ -91,11 +91,11 @@ namespace PetStoreUWPClient
                     var data = BasicData.GetBasicData();
                     var dbConfig = Config.GetInstance();
                     var point = Point.Measurement("air")
-                        .Tag("room", dbConfig.location!=null? dbConfig.location:"prosek")
-                        .Tag("device", dbConfig.deviceId)
-                        .Field("temp", data.CurrentTemperature)
-                        .Field("press", data.CurrentPressure)
-                        .Field("hum", data.CurrentHumidity);
+                        .Tag("location", dbConfig.location!=null? dbConfig.location:"prosek")
+                        .Tag("device_id", dbConfig.deviceId)
+                        .Field("temperature", data.CurrentTemperature)
+                        .Field("pressure", data.CurrentPressure)
+                        .Field("humidity", data.CurrentHumidity);
                     var writeClient = dBClient.GetWriteApi();
                     writeClient.WritePoint(dbConfig.bucket, dbConfig.orgId, point);
                     writeClient.Flush();
@@ -106,7 +106,7 @@ namespace PetStoreUWPClient
                 }
             }
         }
-        private const string FluxQueryTemplate = "from(bucket: \"{0}\") |> range(start: -24h, stop: now()) |> filter(fn: (r) => r._measurement == \"air\" and r._field == \"{1}\" and r.room == \"{2}\") |> aggregateWindow(every: 24h, fn: {3}, createEmpty: false)";
+        private const string FluxQueryTemplate = "from(bucket: \"{0}\") |> range(start: -24h, stop: now()) |> filter(fn: (r) => r._measurement == \"air\" and r._field == \"{1}\" and r.location == \"{2}\") |> aggregateWindow(every: 24h, fn: {3}, createEmpty: false)";
         private void ReadFromDb()
         {
             if (dBClient != null)
@@ -114,47 +114,47 @@ namespace PetStoreUWPClient
                 try
                 {
                     var data = BasicData.GetBasicData();
-                    double val = GetQueryResult("temp", "mean");
+                    double val = GetQueryResult("temperature", "mean");
                     if(val != double.NaN)
                     {
                         data.MeanTemperature = val;
                     }
-                    val = GetQueryResult("temp", "min");
+                    val = GetQueryResult("temperature", "min");
                     if (val != double.NaN)
                     {
                         data.MinTemperature = val;
                     }
-                    val = GetQueryResult("temp", "max");
+                    val = GetQueryResult("temperature", "max");
                     if (val != double.NaN)
                     {
                         data.MaxTemperature = val;
                     }
-                    val = GetQueryResult("hum", "mean");
+                    val = GetQueryResult("humidity", "mean");
                     if (val != double.NaN)
                     {
                         data.MeanHumidity = val;
                     }
-                    val = GetQueryResult("hum", "min");
+                    val = GetQueryResult("humidity", "min");
                     if (val != double.NaN)
                     {
                         data.MinHumidity = val;
                     }
-                    val = GetQueryResult("hum", "max");
+                    val = GetQueryResult("humidity", "max");
                     if (val != double.NaN)
                     {
                         data.MaxHumidity = val;
                     }
-                    val = GetQueryResult("press", "mean");
+                    val = GetQueryResult("pressure", "mean");
                     if (val != double.NaN)
                     {
                         data.MeanPressure = val;
                     }
-                    val = GetQueryResult("press", "min");
+                    val = GetQueryResult("pressure", "min");
                     if (val != double.NaN)
                     {
                         data.MinPressure = val;
                     }
-                    val = GetQueryResult("press", "max");
+                    val = GetQueryResult("pressure", "max");
                     if (val != double.NaN)
                     {
                         data.MaxPressure = val;
