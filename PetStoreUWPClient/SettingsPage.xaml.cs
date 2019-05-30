@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using MetroLog;
+using System.Threading.Tasks;
 using Windows.UI.Xaml.Controls;
 
 // The Blank Page item template is documented at https://go.microsoft.com/fwlink/?LinkId=234238
@@ -10,6 +11,7 @@ namespace PetStoreUWPClient
     /// </summary>
     public sealed partial class SettingsPage : Page
     {
+        private ILogger Log = LogManagerFactory.DefaultLogManager.GetLogger<SettingsPage>();
         public SettingsPage()
         {
             this.InitializeComponent();
@@ -28,6 +30,8 @@ namespace PetStoreUWPClient
 
         private void Save_Click(object sender, Windows.UI.Xaml.RoutedEventArgs e)
         {
+            LocationTextBox.GetBindingExpression(TextBox.TextProperty).UpdateSource();
+            HubUrlTextBox.GetBindingExpression(TextBox.TextProperty).UpdateSource();
             var config = Config.GetInstance();
             var urlChanged = !ViewModel.HubUrl.Equals(config.hubUrl);
             ViewModel.Save();
