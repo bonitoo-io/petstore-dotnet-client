@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using MetroLog;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -11,6 +12,8 @@ namespace PetStoreUWPClient
 {
     public class Config
     {
+        private ILogger Log = LogManagerFactory.DefaultLogManager.GetLogger<Config>();
+
         public string hubUrl = null;
         public string deviceId = null;
         public string url = null;
@@ -68,7 +71,7 @@ namespace PetStoreUWPClient
 
         public bool Load()
         {
-            Debug.WriteLine("DbConfig:Loading");
+            Log.Trace("DbConfig:Loading");
             ApplicationDataContainer localSettings = ApplicationData.Current.LocalSettings;
             url = localSettings.Values["dburl"] as string;
             orgId = localSettings.Values["orgId"] as string;
@@ -77,7 +80,7 @@ namespace PetStoreUWPClient
             deviceId = localSettings.Values["deviceId"] as string;
             location = localSettings.Values["location"] as string;
             hubUrl = localSettings.Values["hubUrl"] as string;
-            Debug.WriteLine($"DbConfig:Loaded:\n{ this }");
+            Log.Info($"DbConfig:Loaded:\n{ this }");
             initialised = true;
             return initialised;
 
@@ -85,7 +88,7 @@ namespace PetStoreUWPClient
 
         public void Save()
         {
-            Debug.WriteLine("DbConfig:Save");
+            Log.Trace("DbConfig:Save");
             ApplicationDataContainer localSettings = ApplicationData.Current.LocalSettings;
             localSettings.Values["dburl"] = ValueOrNull(url);
             localSettings.Values["orgId"] = ValueOrNull(orgId);
@@ -94,6 +97,7 @@ namespace PetStoreUWPClient
             localSettings.Values["location"] = ValueOrNull(location);
             localSettings.Values["hubUrl"] = ValueOrNull(hubUrl);
             localSettings.Values["deviceId"] = ValueOrNull(deviceId);
+            Log.Info($"DbConfig:Saved:\n{ this }");
         }
 
         private static string ValueOrNull(string val)

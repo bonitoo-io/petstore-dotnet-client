@@ -187,6 +187,9 @@
     <PackageReference Include="InfluxDB.Client">
       <Version>1.0.0-alpha</Version>
     </PackageReference>
+    <PackageReference Include="MetroLog">
+      <Version>1.0.1</Version>
+    </PackageReference>
     <PackageReference Include="Microsoft.NETCore.UniversalWindowsPlatform">
       <Version>6.2.7</Version>
     </PackageReference>

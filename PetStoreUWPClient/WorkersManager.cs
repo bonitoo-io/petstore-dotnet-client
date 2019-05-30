@@ -1,4 +1,5 @@
-﻿using System;
+﻿using MetroLog;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -9,6 +10,7 @@ namespace PetStoreUWPClient
 {
     class WorkersManager
     {
+        private ILogger Log = LogManagerFactory.DefaultLogManager.GetLogger<WorkersManager>();
         public HubDiscoveryWorker HubDiscoveryWorker { get; private set; }
         public SensorsWorker SensorsWorker { get; private set; }
         public SubscriptionWorker SubscriptionWorker { get; private set; }
@@ -36,7 +38,7 @@ namespace PetStoreUWPClient
         {
             if (!running)
             {
-                Debug.WriteLine("WorkersManager:Start");
+                Log.Trace("WorkersManager:Start");
                 OnStatusChanged("Starting..");
                 await StartSensorsReading();
 
@@ -52,6 +54,7 @@ namespace PetStoreUWPClient
                 {
                     StartDbWorker();
                 }
+                Log.Trace("WorkersManager:Started");
                 running = true;
             }
         }
@@ -60,7 +63,7 @@ namespace PetStoreUWPClient
         {
             if (running)
             {
-                Debug.WriteLine("WorkersManager:Stop");
+                Log.Trace("WorkersManager:Stop");
                 OnStatusChanged("Stopping workers");
                 StopDbWorker();
                 StopSubscriptionWorker();
@@ -84,21 +87,24 @@ namespace PetStoreUWPClient
                 SubscriptionWorker = null;
                 InfluxDbWorker = null;
                 OnStatusChanged("Stopped workers");
+                Log.Trace("WorkersManager:Stopped");
                 running = false;
             }
         }
 
         public async Task Restart()
         {
+            Log.Trace("WorkersManager:Restart");
             await Stop();
             await Start();
+            Log.Trace("WorkersManager:Restarted");
         }
 
         private void StartHubDiscovery()
         {
             if (HubDiscoveryWorker == null)
             {
-                Debug.WriteLine("WorkersManager:StartHubDiscovery");
+                Log.Trace("WorkersManager:StartHubDiscovery");
                 HubDiscoveryWorker = new HubDiscoveryWorker();
                 HubDiscoveryWorker.DiscoveryCompleted += HubDiscoveryWorker_DiscoveryCompleted;
                 OnStatusChanged("Discovering hub");
@@ -110,7 +116,7 @@ namespace PetStoreUWPClient
         {
             if (HubDiscoveryWorker != null)
             {
-                Debug.WriteLine("WorkersManager:StopHubDiscovery");
+                Log.Trace("WorkersManager:StopHubDiscovery");
                 HubDiscoveryWorker.DiscoveryCompleted -= HubDiscoveryWorker_DiscoveryCompleted;
                 HubDiscoveryWorker.Stop();
                 
@@ -121,7 +127,7 @@ namespace PetStoreUWPClient
         {
             if (e.Result.HubUrl != null)
             {
-                Debug.WriteLine($"WorkersManager:DiscoveryCompleted: {e.Result.HubUrl}");
+                Log.Info($"WorkersManager:DiscoveryCompleted: {e.Result.HubUrl}");
                 var hubUrl = e.Result.HubUrl;
                 OnStatusChanged($"Discoverered hub url: {e.Result.HubUrl}");
                 StartSubscriptionWorker(hubUrl);
@@ -136,7 +142,7 @@ namespace PetStoreUWPClient
         {
             if (SensorsWorker == null)
             {
-                Debug.WriteLine("WorkersManager:StartSensorsReading");
+                Log.Trace("WorkersManager:StartSensorsReading");
                 SensorsWorker = new SensorsWorker(15000);
                 SensorsWorker.StatusChanged += Worker_StatusChanged;
                 await SensorsWorker.Start();
@@ -147,7 +153,7 @@ namespace PetStoreUWPClient
         {
             if (SensorsWorker != null)
             {
-                Debug.WriteLine("WorkersManager:StopSensorsReading");
+                Log.Trace("WorkersManager:StopSensorsReading");
                 SensorsWorker.StatusChanged -= Worker_StatusChanged;
                 SensorsWorker.Stop();
                 
@@ -163,7 +169,7 @@ namespace PetStoreUWPClient
         {
             if(SubscriptionWorker == null)
             {
-                Debug.WriteLine("WorkersManager:StartSubscriptionWorker");
+                Log.Trace("WorkersManager:StartSubscriptionWorker");
                 SubscriptionWorker = new SubscriptionWorker(hubUrl);
                 SubscriptionWorker.SubscriptionStatusChanged += SubscriptionWorker_SubscriptionStatusChanged;
                 SubscriptionWorker.Start();
@@ -175,7 +181,7 @@ namespace PetStoreUWPClient
         {
             if (SubscriptionWorker != null)
             {
-                Debug.WriteLine("WorkersManager:StopSubscriptionWorker");
+                Log.Trace("WorkersManager:StopSubscriptionWorker");
                 SubscriptionWorker.SubscriptionStatusChanged -= SubscriptionWorker_SubscriptionStatusChanged;
                 SubscriptionWorker.Stop();
                
@@ -187,7 +193,7 @@ namespace PetStoreUWPClient
         {
             if(InfluxDbWorker == null)
             {
-                Debug.WriteLine("WorkersManager:StartDbWorker");
+                Log.Trace("WorkersManager:StartDbWorker");
                 InfluxDbWorker = new InfluxDbWorker();
                 InfluxDbWorker.StatusChanged += Worker_StatusChanged;
                 InfluxDbWorker.Start();
@@ -198,7 +204,7 @@ namespace PetStoreUWPClient
         {
             if (InfluxDbWorker != null)
             {
-                Debug.WriteLine("WorkersManager:StopDbWorker");
+                Log.Trace("WorkersManager:StopDbWorker");
                 InfluxDbWorker.StatusChanged -= Worker_StatusChanged;
                 InfluxDbWorker.Stop();
                 
@@ -227,6 +233,7 @@ namespace PetStoreUWPClient
             } 
             if(e.Status == SubscriptionStatus.WaitingForAuthorization && lastStatus != SubscriptionStatus.WaitingForAuthorization)
             {
+                Log.Info("WorkersManager:Deauthorization, clearing DB config and restarting");
                 var config = Config.GetInstance();
                 config.ResetDbSettings();
                 config.Save();

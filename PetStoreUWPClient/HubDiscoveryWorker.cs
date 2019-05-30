@@ -1,13 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using MetroLog;
+using System;
 using System.ComponentModel;
 using System.Diagnostics;
-using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
 
 namespace PetStoreUWPClient
 {
@@ -31,6 +29,7 @@ namespace PetStoreUWPClient
 
     public class HubDiscoveryWorker
     {
+        private ILogger Log = LogManagerFactory.DefaultLogManager.GetLogger<HubDiscoveryWorker>();
         private BackgroundWorker hubDiscoveryWorker;
         private const int DiscoveryListenPort = 4567;
         private const string PetStoreHubUrlPrefix = "[petstore.hubUrl=";
@@ -59,7 +58,7 @@ namespace PetStoreUWPClient
 
         private void HubDiscoveryWorker_DoWork(object sender, DoWorkEventArgs e)
         {
-            Debug.WriteLine("HubDiscoveryWorker:Started");
+            Log.Trace("HubDiscoveryWorker:Started");
             Running = true;
             Socket socket = null;
             var buffer = new byte[1024];
@@ -78,7 +77,7 @@ namespace PetStoreUWPClient
                 socket.Bind(endPoint);
                 socket.SetSocketOption(SocketOptionLevel.IP, SocketOptionName.AddMembership, new MulticastOption(GroupAddress, ipAddress));
 
-                Debug.WriteLine("HubDiscoveryWorker:Waiting for broadcast");
+                Log.Info("HubDiscoveryWorker:Waiting for broadcast");
                 while (!hubDiscoveryWorker.CancellationPending)
                 {
 
@@ -100,13 +99,13 @@ namespace PetStoreUWPClient
                         if (message.StartsWith(PetStoreHubUrlPrefix))
                         {
                             var url = message.Substring(PetStoreHubUrlPrefix.Length, message.Length - PetStoreHubUrlPrefix.Length - 1);
-                            Debug.WriteLine(string.Format("HubDiscoveryWorker:huburl: {0}", url));
+                            Log.Info($"HubDiscoveryWorker:huburl: {url}");
                             e.Result = new HubDiscoreryResult(url);
                             break;
                         }
                         else
                         {
-                            Debug.WriteLine(string.Format("HubDiscoveryWorker:Received: {0}", message));
+                            Log.Debug($"HubDiscoveryWorker:Received: {message}");
                         }
                     }
                     else
@@ -118,7 +117,7 @@ namespace PetStoreUWPClient
             }
             catch (SocketException ex)
             {
-                Debug.WriteLine(e);
+                Log.Error("Subscription communication error", ex);
                 e.Result = new HubDiscoreryResult(ex);
             }
             finally
@@ -134,11 +133,11 @@ namespace PetStoreUWPClient
             if (hubDiscoveryWorker.CancellationPending)
             {
                 e.Cancel = true;
-                Debug.WriteLine("Discovery canceled");
+                Log.Trace("Discovery canceled");
             }
 
             Running = true;
-            Debug.WriteLine("HubDiscoveryWorker:Stopped");
+            Log.Trace("HubDiscoveryWorker:Stopped");
         }
 
         private void HubDiscoveryWorker_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)

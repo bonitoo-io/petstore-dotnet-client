@@ -1,5 +1,6 @@
 ﻿using InfluxDB.Client;
 using InfluxDB.Client.Writes;
+using MetroLog;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -13,6 +14,7 @@ namespace PetStoreUWPClient
 {
     public class InfluxDbWorker
     {
+        private ILogger Log = LogManagerFactory.DefaultLogManager.GetLogger<InfluxDbWorker>();
         private BackgroundWorker dbWorker;
         private InfluxDBClient dBClient;
         private int delay;
@@ -43,7 +45,7 @@ namespace PetStoreUWPClient
 
         private void DbWorker_DoWork(object sender, DoWorkEventArgs e)
         {
-            Debug.WriteLine("InfluxDbWorker:Started");
+            Log.Trace("InfluxDbWorker:Started");
             Running = true;
             while (!dbWorker.CancellationPending)
             {
@@ -59,7 +61,7 @@ namespace PetStoreUWPClient
                 e.Cancel = true;
             }
             Running = false;
-            Debug.WriteLine("InfluxDbWorker:Stopped");
+            Log.Trace("InfluxDbWorker:Stopped");
         }
 
         private void InitializeDb()
@@ -69,13 +71,14 @@ namespace PetStoreUWPClient
             {
                 try
                 {
-                    Debug.WriteLine("InfluxDbWorker:InitializeDb");
+                    Log.Trace("InfluxDbWorker:InitializeDb");
                     dBClient = InfluxDBClientFactory.Create(dbConfig.url, dbConfig.authToken.ToCharArray());
                     dBClient.Ready();
                 }
                 catch (Exception ex)
                 {
-                    OnStatusChanged("DB Error: " + ex.Message);
+                    Log.Error("Db init error", ex);
+                    OnStatusChanged("DB Init Error: " + ex.Message);
                 }
             }
         }
@@ -87,7 +90,7 @@ namespace PetStoreUWPClient
             {
                 try
                 {
-                    Debug.WriteLine("InfluxDbWorker:WriteToDb");
+                    Log.Trace("InfluxDbWorker:WriteToDb");
                     var data = BasicData.GetBasicData();
                     var dbConfig = Config.GetInstance();
                     var point = Point.Measurement("air")
@@ -102,7 +105,8 @@ namespace PetStoreUWPClient
                 }
                 catch (Exception ex)
                 {
-                    OnStatusChanged("DB Error: " + ex.Message);
+                    Log.Error("Db Write error", ex);
+                    OnStatusChanged("DB Write Error: " + ex.Message);
                 }
             }
         }
@@ -163,7 +167,8 @@ namespace PetStoreUWPClient
                 }
                 catch (Exception ex)
                 {
-                    OnStatusChanged("DB Error: " + ex.Message);
+                    Log.Error("Db Query error", ex);
+                    OnStatusChanged("DB Query Error: " + ex.Message);
                 }
 
             }
@@ -180,8 +185,8 @@ namespace PetStoreUWPClient
                 var fluxRecords = fluxTable.Records;
                 fluxRecords.ForEach(fluxRecord =>
                 {
-                    Debug.WriteLine($"GetQueryResul: {fluxRecord.GetTime()}: {fluxRecord.GetValue()}");
-                    value = (double)fluxRecord.GetValue();
+                   Log.Debug($"GetQueryResul: {fluxRecord.GetTime()}: {fluxRecord.GetValue()}");
+                   value = (double)fluxRecord.GetValue();
                 });
             });
             if (value != null)
@@ -197,7 +202,7 @@ namespace PetStoreUWPClient
 
         private void DbWorker_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
         {
-            Debug.WriteLine("InfluxDbWorker:RunWorkerComplete");
+           Log.Trace("InfluxDbWorker:RunWorkerComplete");
             dBClient.Dispose();
             dBClient = null;
         }

@@ -1,4 +1,5 @@
-﻿using RestSharp;
+﻿using MetroLog;
+using RestSharp;
 using System;
 using System.ComponentModel;
 using System.Diagnostics;
@@ -19,6 +20,7 @@ namespace PetStoreUWPClient
 
     public class SubscriptionWorker
     {
+        private ILogger Log = LogManagerFactory.DefaultLogManager.GetLogger<SubscriptionWorker>();
         private BackgroundWorker subscriptionWorker;
         private string hubUrl;
         private int delay;
@@ -69,7 +71,7 @@ namespace PetStoreUWPClient
             var status = SubscriptionStatus.None;
             //todo: url to ui
             RestClient hubClient = new RestClient(hubUrl);
-
+            Log.Trace("SubscriptionWorker:Subscribe");
 
             var request = new RestRequest("register/{id}", Method.GET);
             //equest.AddUrlSegment("id", "1234-5678-9012-3456"); // replaces matching token in request.Resource
@@ -82,11 +84,11 @@ namespace PetStoreUWPClient
             {
                 status = SubscriptionStatus.Error;
                 ErrorString = "Subscription error: " + response.ErrorException.Message;
-                Debug.WriteLine("SubscriptionWorker:Subscribe:Error: " + ErrorString);
+                Log.Error("Subscribe Error: ", response.ErrorException);
             }
             else
             {
-                Debug.WriteLine("SubscriptionWorker:Subscribe:statusCode: " + (int)response.StatusCode);
+                Log.Debug("SubscriptionWorker:Subscribe:statusCode: " + (int)response.StatusCode);
                 switch (response.StatusCode)
                 {
                     case System.Net.HttpStatusCode.OK:

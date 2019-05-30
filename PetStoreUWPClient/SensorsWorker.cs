@@ -1,4 +1,5 @@
 ﻿using BuildAzure.IoT.Adafruit.BME280;
+using MetroLog;
 using Sensors.Dht;
 using System;
 using System.ComponentModel;
@@ -12,6 +13,7 @@ namespace PetStoreUWPClient
 
     public class SensorsWorker
     {
+        private ILogger Log = LogManagerFactory.DefaultLogManager.GetLogger<SensorsWorker>();
         private const int DHT22_Pin = 17;
 
         private BackgroundWorker readingWorker;
@@ -50,7 +52,7 @@ namespace PetStoreUWPClient
 
         private async Task<bool> InitSensors()
         {
-            Debug.WriteLine("SensorsWorker:InitSensors start");
+            Log.Trace("SensorsWorker:InitSensors start");
             OnStatusChanged("Initialising sensors");
             // Initialize the BMP180 Sensor
             try
@@ -59,8 +61,9 @@ namespace PetStoreUWPClient
                 bmp180 = new Bmp180Sensor();
                 await bmp180.InitializeAsync();
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                Log.Info("BMP180 Init Error", ex);
                 bmp180 = null;
             }
 
@@ -81,8 +84,9 @@ namespace PetStoreUWPClient
                         StandbyDuration.STANDBY_MS_1000);
                 }
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                Log.Info("BME280 Init Error", ex);
                 bme280 = null;
             }
 
@@ -93,8 +97,9 @@ namespace PetStoreUWPClient
                 dhtPin = GpioController.GetDefault().OpenPin(DHT22_Pin, GpioSharingMode.Exclusive);
                 dhtSensor = new Dht22(dhtPin, GpioPinDriveMode.InputPullUp);
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                Log.Info("DHT22 Init Error", ex);
                 dhtSensor = null;
             }
             string status = "";
@@ -127,14 +132,15 @@ namespace PetStoreUWPClient
             }
             OnStatusChanged(status);
             await Task.Delay(500);
-            Debug.WriteLine($"SensorsWorker:InitSensors end: {status}");
+            Log.Trace($"SensorsWorker:InitSensors end");
+            Log.Info(status);
             return bmp180 != null || bme280 != null || dhtSensor != null;
             
         }
 
         private void ReadingWorker_DoWork(object sender, DoWorkEventArgs e)
         {
-            Debug.WriteLine("SensorWorker:ReadingWorker started");
+            Log.Trace("SensorWorker:ReadingWorker started");
             Running = true;
             while (!readingWorker.CancellationPending)
             {
@@ -147,7 +153,7 @@ namespace PetStoreUWPClient
             }
             DeinitSensors();
             Running = false;
-            Debug.WriteLine("SensorWorker:ReadingWorker stopped");
+            Log.Trace("SensorWorker:ReadingWorker stopped");
         }
 
         private void DeinitSensors()
@@ -181,7 +187,7 @@ namespace PetStoreUWPClient
             int humCount = 0;
             int presCount = 0;
 
-
+            Log.Trace("SensorsWorker:ReadData");
             // Read and format Sensor data
             try
             {
@@ -201,7 +207,7 @@ namespace PetStoreUWPClient
             catch (Exception ex)
             {
                 status = "Bmp180 Error: " + ex.Message;
-                Debug.WriteLine(status);
+                Log.Error("Bmp180 read Error", ex);
                 detailData.Bmp180Temperature = double.NaN;
                 detailData.Bmp180Pressure = double.NaN;
             }
@@ -234,7 +240,7 @@ namespace PetStoreUWPClient
             catch (Exception ex)
             {
                 status = "Bme280 Error: " + ex.Message;
-                Debug.WriteLine(status);
+                Log.Error("Bme280 read Error", ex);
                 detailData.Bme280Temperature = double.NaN;
                 detailData.Bme280Humidity = double.NaN;
                 detailData.Bme280Pressure = double.NaN;
@@ -266,7 +272,7 @@ namespace PetStoreUWPClient
             catch (Exception ex)
             {
                 status = "DHT22 Error: " + ex.Message;
-                Debug.WriteLine(status);
+                Log.Error("DHT22 read Error", ex);
                 detailData.DhtTemperature = double.NaN;
                 detailData.DhtHumidity = double.NaN;
             }
