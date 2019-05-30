@@ -202,6 +202,7 @@ namespace PetStoreUWPClient
 
                     avgPres += sensorData.Pressure;
                     ++presCount;
+                    Log.Debug($"BMP180: {detailData.Bmp180Temperature},N/A,{detailData.Bmp180Pressure}");
                 }
             }
             catch (Exception ex)
@@ -235,6 +236,7 @@ namespace PetStoreUWPClient
                     detailData.Bme280Pressure = await bme280.ReadPressure() / 100.0;
                     avgPres += detailData.Bme280Pressure;
                     ++presCount;
+                    Log.Debug($"BME280: {detailData.Bme280Temperature},{detailData.Bme280Humidity},{detailData.Bme280Pressure}");
                 }
             }
             catch (Exception ex)
@@ -266,6 +268,11 @@ namespace PetStoreUWPClient
                         ++tempCount;
                         avgHum += reading.Humidity;
                         ++humCount;
+                        Log.Debug($"DHT22: {detailData.DhtTemperature},{detailData.DhtHumidity},N/A,");
+                    }
+                    else
+                    {
+                        Log.Debug($"DHT22: invalid reading");
                     }
                 }
             }
