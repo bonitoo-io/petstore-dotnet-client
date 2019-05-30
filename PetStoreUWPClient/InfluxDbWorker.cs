@@ -94,14 +94,31 @@ namespace PetStoreUWPClient
                     var data = BasicData.GetBasicData();
                     var dbConfig = Config.GetInstance();
                     var point = Point.Measurement("air")
-                        .Tag("location", dbConfig.location!=null? dbConfig.location:"prosek")
-                        .Tag("device_id", dbConfig.deviceId)
-                        .Field("temperature", data.CurrentTemperature)
-                        .Field("pressure", data.CurrentPressure)
-                        .Field("humidity", data.CurrentHumidity);
-                    var writeClient = dBClient.GetWriteApi();
-                    writeClient.WritePoint(dbConfig.bucket, dbConfig.orgId, point);
-                    writeClient.Flush();
+                        .Tag("location", dbConfig.location != null ? dbConfig.location : "prosek")
+                        .Tag("device_id", dbConfig.deviceId);
+                    int validFields = 0;
+                    if (data.CurrentTemperature != double.NaN) {
+                        point.Field("temperature", data.CurrentTemperature);
+                        ++validFields;
+                    }
+                    if (data.CurrentPressure != double.NaN)
+                    {
+                        point.Field("pressure", data.CurrentPressure);
+                        ++validFields;
+                    }
+                    if (data.CurrentHumidity != double.NaN) { 
+                        point.Field("humidity", data.CurrentHumidity);
+                        ++validFields;
+                    }
+                    if (validFields > 0)
+                    {
+                        var writeClient = dBClient.GetWriteApi();
+                        writeClient.WritePoint(dbConfig.bucket, dbConfig.orgId, point);
+                        writeClient.Flush();
+                    } else
+                    {
+                        Log.Debug("InfluxDbWorker:WriteToDb - nothing to write, all values are invalid");
+                    }
                 }
                 catch (Exception ex)
                 {
