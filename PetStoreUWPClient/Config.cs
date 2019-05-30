@@ -31,6 +31,11 @@ namespace PetStoreUWPClient
             {
                 instance = new Config();
                 instance.Load();
+                //TODO: hack for headless device 
+                if(instance.hubUrl == null || instance.hubUrl.Length == 0)
+                {
+                    instance.hubUrl = "https://petstore.bonitoo4influxdata.com/api";
+                }
             }
             return instance;
 
