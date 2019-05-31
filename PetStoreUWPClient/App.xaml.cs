@@ -24,6 +24,7 @@ namespace PetStoreUWPClient
     /// </summary>
     sealed partial class App : Application
     {
+        private ILogger Log;
         /// <summary>
         /// Initializes the singleton application object.  This is the first line of authored code
         /// executed, and as such is the logical equivalent of main() or WinMain().
@@ -32,6 +33,7 @@ namespace PetStoreUWPClient
         {
             this.InitializeComponent();
             this.Suspending += OnSuspending;
+            this.UnhandledException += OnUnhandledException;
 
 #if DEBUG
             LogManagerFactory.DefaultConfiguration.AddTarget(LogLevel.Trace, LogLevel.Fatal, new StreamingFileTarget());
@@ -42,6 +44,13 @@ namespace PetStoreUWPClient
 
             // setup the global crash handler...
             GlobalCrashHandler.Configure();
+            Log = LogManagerFactory.DefaultLogManager.GetLogger<App>();
+            Log.Trace("App:init");
+        }
+
+        private void OnUnhandledException(object sender, Windows.UI.Xaml.UnhandledExceptionEventArgs e)
+        {
+            Log.Fatal($"Unhandled exception. Sender: {sender}", e.Exception);
         }
 
 
@@ -52,6 +61,7 @@ namespace PetStoreUWPClient
         /// <param name="e">Details about the launch request and process.</param>
         protected override void OnLaunched(LaunchActivatedEventArgs e)
         {
+            Log.Trace("App:Launched");
             Frame rootFrame = Window.Current.Content as Frame;
 
             // Do not repeat app initialization when the Window already has content,
@@ -105,6 +115,7 @@ namespace PetStoreUWPClient
         /// <param name="e">Details about the suspend request.</param>
         private void OnSuspending(object sender, SuspendingEventArgs e)
         {
+            Log.Trace("App:Suspending");
             var deferral = e.SuspendingOperation.GetDeferral();
             //TODO: Save application state and stop any background activity
             deferral.Complete();
