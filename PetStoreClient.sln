@@ -12,6 +12,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		ReadMe.md = ReadMe.md
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PetStoreConsoleClient", "PetStoreConsoleClient\PetStoreConsoleClient.csproj", "{94A87528-A171-43BB-A120-9A57C91A181D}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -72,6 +74,26 @@ Global
 		{97997BD3-95B2-4A44-B25F-AD07342BA45D}.Release|x64.Build.0 = Release|Any CPU
 		{97997BD3-95B2-4A44-B25F-AD07342BA45D}.Release|x86.ActiveCfg = Release|Any CPU
 		{97997BD3-95B2-4A44-B25F-AD07342BA45D}.Release|x86.Build.0 = Release|Any CPU
+		{94A87528-A171-43BB-A120-9A57C91A181D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{94A87528-A171-43BB-A120-9A57C91A181D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{94A87528-A171-43BB-A120-9A57C91A181D}.Debug|ARM.ActiveCfg = Debug|Any CPU
+		{94A87528-A171-43BB-A120-9A57C91A181D}.Debug|ARM.Build.0 = Debug|Any CPU
+		{94A87528-A171-43BB-A120-9A57C91A181D}.Debug|ARM64.ActiveCfg = Debug|Any CPU
+		{94A87528-A171-43BB-A120-9A57C91A181D}.Debug|ARM64.Build.0 = Debug|Any CPU
+		{94A87528-A171-43BB-A120-9A57C91A181D}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{94A87528-A171-43BB-A120-9A57C91A181D}.Debug|x64.Build.0 = Debug|Any CPU
+		{94A87528-A171-43BB-A120-9A57C91A181D}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{94A87528-A171-43BB-A120-9A57C91A181D}.Debug|x86.Build.0 = Debug|Any CPU
+		{94A87528-A171-43BB-A120-9A57C91A181D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{94A87528-A171-43BB-A120-9A57C91A181D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{94A87528-A171-43BB-A120-9A57C91A181D}.Release|ARM.ActiveCfg = Release|Any CPU
+		{94A87528-A171-43BB-A120-9A57C91A181D}.Release|ARM.Build.0 = Release|Any CPU
+		{94A87528-A171-43BB-A120-9A57C91A181D}.Release|ARM64.ActiveCfg = Release|Any CPU
+		{94A87528-A171-43BB-A120-9A57C91A181D}.Release|ARM64.Build.0 = Release|Any CPU
+		{94A87528-A171-43BB-A120-9A57C91A181D}.Release|x64.ActiveCfg = Release|Any CPU
+		{94A87528-A171-43BB-A120-9A57C91A181D}.Release|x64.Build.0 = Release|Any CPU
+		{94A87528-A171-43BB-A120-9A57C91A181D}.Release|x86.ActiveCfg = Release|Any CPU
+		{94A87528-A171-43BB-A120-9A57C91A181D}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
