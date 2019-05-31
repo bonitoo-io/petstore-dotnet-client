@@ -30,8 +30,6 @@ namespace PetStoreUWPClient
 
         private void Save_Click(object sender, Windows.UI.Xaml.RoutedEventArgs e)
         {
-            LocationTextBox.GetBindingExpression(TextBox.TextProperty).UpdateSource();
-            HubUrlTextBox.GetBindingExpression(TextBox.TextProperty).UpdateSource();
             var config = Config.GetInstance();
             var urlChanged = !ViewModel.HubUrl.Equals(config.hubUrl);
             ViewModel.Save();

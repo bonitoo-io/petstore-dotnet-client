@@ -28,8 +28,8 @@
             </Grid.RowDefinitions>
             <TextBlock Grid.Column="0" Grid.Row="0" FontSize="30px" FontWeight="Bold"  TextWrapping="Wrap" Text="PetStore Hub URL:" TextAlignment="Right"/>
             <TextBlock Grid.Column="0" Grid.Row="1" TextWrapping="Wrap" FontSize="30px" FontWeight="Bold" Text="Location:" TextAlignment="Right"/>
-            <TextBox Grid.Column="1" x:Name="HubUrlTextBox" Grid.Row="0" FontSize="30px" TextWrapping="NoWrap" Text="{x:Bind ViewModel.HubUrl, Mode=TwoWay}" HorizontalAlignment="Stretch" TextAlignment="Left" Margin="20,0,0,0"/>
-            <TextBox Grid.Column="1" x:Name="LocationTextBox" Grid.Row="1" FontSize="30px" TextWrapping="NoWrap" Text="{x:Bind ViewModel.Location, Mode=TwoWay}" HorizontalAlignment="Stretch" TextAlignment="Left" Margin="20,0,0,0"/>
+            <TextBox Grid.Column="1" x:Name="HubUrlTextBox" Grid.Row="0" FontSize="30px" TextWrapping="NoWrap" Text="{x:Bind ViewModel.HubUrl, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" HorizontalAlignment="Stretch" TextAlignment="Left" Margin="20,0,0,0"/>
+            <TextBox Grid.Column="1" x:Name="LocationTextBox" Grid.Row="1" FontSize="30px" TextWrapping="NoWrap" Text="{x:Bind ViewModel.Location, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" HorizontalAlignment="Stretch" TextAlignment="Left" Margin="20,0,0,0"/>
         </Grid>
         <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="20" HorizontalAlignment="Center">
             <Button FontSize="30px" HorizontalAlignment="Center" Content="Cancel" Click="Cancel_Click"  Background="Blue" Margin="20,0,0,0"/>
