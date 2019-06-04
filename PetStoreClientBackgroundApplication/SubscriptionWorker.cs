@@ -2,12 +2,11 @@
 using RestSharp;
 using System;
 using System.ComponentModel;
-using System.Diagnostics;
 using System.Linq;
 using System.Net.NetworkInformation;
 using System.Threading;
 
-namespace PetStoreUWPClient
+namespace PetStoreClientBackgroundApplication
 {
     public enum SubscriptionStatus
     {
@@ -18,7 +17,7 @@ namespace PetStoreUWPClient
         Error
     };
 
-    public class SubscriptionWorker
+    class SubscriptionWorker
     {
         private ILogger Log = LogManagerFactory.DefaultLogManager.GetLogger<SubscriptionWorker>();
         private BackgroundWorker subscriptionWorker;
@@ -93,8 +92,8 @@ namespace PetStoreUWPClient
                 {
                     case System.Net.HttpStatusCode.OK:
                         status = SubscriptionStatus.Accepted;// "Device accepted";
-                        Config.GetInstance().InitFromJson(response.Content);
-                        Config.GetInstance().Save();
+                        WorkersManager.GetWorkersManager().Config.UpdateFromSubscriptionRensponseJson(response.Content);
+                        WorkersManager.GetWorkersManager().Config.Save(LocalSettingsConfigProvider.Instance);
                         break;
                     case System.Net.HttpStatusCode.Created:
                         status = SubscriptionStatus.WaitingForAuthorization;// "Waiting for device authorization";
@@ -161,7 +160,7 @@ namespace PetStoreUWPClient
 
     }
 
-    public class SubscriptionStatusUpdatedEventArgs : EventArgs
+    class SubscriptionStatusUpdatedEventArgs
     {
         public SubscriptionStatus Status { get; set; }
         public SubscriptionStatusUpdatedEventArgs(SubscriptionStatus status)

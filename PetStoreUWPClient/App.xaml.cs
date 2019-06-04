@@ -45,7 +45,7 @@ namespace PetStoreUWPClient
             // setup the global crash handler...
             GlobalCrashHandler.Configure();
             Log = LogManagerFactory.DefaultLogManager.GetLogger<App>();
-            Log.Trace("App:init");
+            Log.Trace("Init");
         }
 
         private void OnUnhandledException(object sender, Windows.UI.Xaml.UnhandledExceptionEventArgs e)
@@ -61,7 +61,7 @@ namespace PetStoreUWPClient
         /// <param name="e">Details about the launch request and process.</param>
         protected override void OnLaunched(LaunchActivatedEventArgs e)
         {
-            Log.Trace("App:Launched");
+            Log.Trace("Launched");
             Frame rootFrame = Window.Current.Content as Frame;
 
             // Do not repeat app initialization when the Window already has content,
@@ -94,6 +94,7 @@ namespace PetStoreUWPClient
                 // Ensure the current window is active
                 Window.Current.Activate();
             }
+            DataManager.Instance.Start();
         }
 
         /// <summary>
@@ -115,7 +116,7 @@ namespace PetStoreUWPClient
         /// <param name="e">Details about the suspend request.</param>
         private void OnSuspending(object sender, SuspendingEventArgs e)
         {
-            Log.Trace("App:Suspending");
+            Log.Trace("Suspending");
             var deferral = e.SuspendingOperation.GetDeferral();
             //TODO: Save application state and stop any background activity
             deferral.Complete();

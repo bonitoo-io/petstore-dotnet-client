@@ -1,4 +1,5 @@
 ﻿using MetroLog;
+using PetStoreClientDataModel;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -6,7 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace PetStoreUWPClient
+namespace PetStoreClientBackgroundApplication
 {
     class WorkersManager
     {
@@ -15,8 +16,25 @@ namespace PetStoreUWPClient
         public SensorsWorker SensorsWorker { get; private set; }
         public SubscriptionWorker SubscriptionWorker { get; private set; }
         public InfluxDbWorker InfluxDbWorker { get; private set; }
+        private Config config;
+        public Config Config
+        {
+            get {
+                if (config == null)
+                {
+                    config = new Config();
+                    config.Load(LocalSettingsConfigProvider.Instance);
+                }
+                return config;
+            }
+            private set
+            {
+                config = value;
+            }
+        }
         private bool running;
         private SubscriptionStatus lastStatus = SubscriptionStatus.None;
+
 
         private static WorkersManager instance;
 
@@ -42,15 +60,15 @@ namespace PetStoreUWPClient
                 OnStatusChanged("Starting..");
                 await StartSensorsReading();
 
-                if (Config.GetInstance().hubUrl != null)
+                if (Config.HubUrl != null)
                 {
-                    StartSubscriptionWorker(Config.GetInstance().hubUrl);
+                    StartSubscriptionWorker(Config.HubUrl);
                 }
                 else
                 {
                     StartHubDiscovery();
                 }
-                if (Config.GetInstance().IsDbConfigAvailable())
+                if (Config.IsDbConfigAvailable())
                 {
                     StartDbWorker();
                 }
@@ -143,7 +161,7 @@ namespace PetStoreUWPClient
             if (SensorsWorker == null)
             {
                 Log.Trace("WorkersManager:StartSensorsReading");
-                SensorsWorker = new SensorsWorker(15000);
+                SensorsWorker = new SensorsWorker(Config.SensorsPeriod);
                 SensorsWorker.StatusChanged += Worker_StatusChanged;
                 await SensorsWorker.Start();
             }
@@ -170,7 +188,7 @@ namespace PetStoreUWPClient
             if(SubscriptionWorker == null)
             {
                 Log.Trace("WorkersManager:StartSubscriptionWorker");
-                SubscriptionWorker = new SubscriptionWorker(hubUrl);
+                SubscriptionWorker = new SubscriptionWorker(hubUrl, Config.SubscriptionCheckPeriod);
                 SubscriptionWorker.SubscriptionStatusChanged += SubscriptionWorker_SubscriptionStatusChanged;
                 SubscriptionWorker.Start();
             }
@@ -194,7 +212,7 @@ namespace PetStoreUWPClient
             if(InfluxDbWorker == null)
             {
                 Log.Trace("WorkersManager:StartDbWorker");
-                InfluxDbWorker = new InfluxDbWorker();
+                InfluxDbWorker = new InfluxDbWorker(Config.DbReadWritePeriod);
                 InfluxDbWorker.StatusChanged += Worker_StatusChanged;
                 InfluxDbWorker.Start();
             }
@@ -222,9 +240,9 @@ namespace PetStoreUWPClient
             }
             if(e.Status == SubscriptionStatus.Accepted || e.Status == SubscriptionStatus.Subscribed)
             {
-                if(!Config.GetInstance().IsDbConfigAvailable())
+                if(!Config.IsDbConfigAvailable())
                 {
-                    BasicData.GetBasicData().Status = "Logic error: subscribed, but without config";
+                    OnStatusChanged("Logic error: subscribed, but without config");
                 }
                 else
                 {
@@ -233,10 +251,9 @@ namespace PetStoreUWPClient
             } 
             if(e.Status == SubscriptionStatus.WaitingForAuthorization && lastStatus != SubscriptionStatus.WaitingForAuthorization)
             {
-                Log.Info("WorkersManager:Deauthorization, clearing DB config and restarting");
-                var config = Config.GetInstance();
-                config.ResetDbSettings();
-                config.Save();
+                Log.Info("Deauthorization, clearing DB config and restarting");
+                Config.ResetDbSettings();
+                Config.Save(LocalSettingsConfigProvider.Instance);
 #pragma warning disable CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
                 Restart();
 #pragma warning restore CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
@@ -249,10 +266,8 @@ namespace PetStoreUWPClient
 
         protected void OnStatusChanged(string status)
         {
-            StatusChanged?.Invoke(this, new StatusUpdatedEventArgs(status));
+            OverviewData.GetOverviewData().Status = status;
         }
-
-        public event EventHandler<StatusUpdatedEventArgs> StatusChanged;
 
     }
 }

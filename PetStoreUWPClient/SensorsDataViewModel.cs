@@ -1,15 +1,17 @@
-﻿namespace PetStoreUWPClient
-{
-    public class DetailData : BindableBase
-    {
-        private static DetailData instance = new DetailData();
+﻿using PetStoreClientDataModel;
 
-        public static DetailData GetDetailData()
+namespace PetStoreUWPClient
+{
+    public class SensorsDataViewModel : BindableBase
+    {
+        private static SensorsDataViewModel instance = new SensorsDataViewModel();
+
+        public static SensorsDataViewModel GetSensorsDataViewModel()
         {
             return instance;
         }
 
-        private DetailData()
+        private SensorsDataViewModel()
         {
             Reset();
         }
@@ -24,6 +26,18 @@
             DhtTemperature = double.NaN;
             DhtHumidity = double.NaN;
             Status = "";
+        }
+        
+        public void Update(MeasuredData measuredData)
+        {
+            Bmp180Temperature = measuredData.Bmp180Temperature;
+            Bmp180Pressure = measuredData.Bmp180Pressure;
+            Bme280Temperature = measuredData.Bme280Temperature;
+            Bme280Humidity = measuredData.Bme280Humidity;
+            Bme280Pressure = measuredData.Bme280Pressure;
+            DhtTemperature = measuredData.DhtTemperature;
+            DhtHumidity = measuredData.DhtHumidity;
+            Status = measuredData.Status;
         }
 
         private double bmp180Temperature;

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using PetStoreClientDataModel;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -6,15 +7,15 @@ using System.Threading.Tasks;
 
 namespace PetStoreUWPClient
 {
-    public class BasicData : BindableBase
+    public class OverviewDataViewModel : BindableBase
     {
-        private static BasicData instance = new BasicData();
+        private static OverviewDataViewModel instance = new OverviewDataViewModel();
 
-        public static BasicData GetBasicData()
+        public static OverviewDataViewModel GetOverviewDataViewModel()
         {
             return instance;
         }
-        private BasicData()
+        private OverviewDataViewModel()
         {
             
         }
@@ -34,6 +35,23 @@ namespace PetStoreUWPClient
             MinPressure = double.NaN;
             MaxPressure = double.NaN;
             Status = "";
+        }
+
+        public void Update(OverviewData data)
+        {
+            CurrentTemperature = data.CurrentTemperature;
+            MeanTemperature = data.MeanTemperature;
+            MaxTemperature = data.MaxTemperature;
+            MinTemperature = data.MinTemperature;
+            CurrentHumidity = data.CurrentHumidity;
+            MinHumidity = data.MinHumidity;
+            MeanHumidity = data.MeanHumidity; ;
+            MaxHumidity = data.MaxHumidity;
+            CurrentPressure = data.CurrentPressure;
+            MeanPressure = data.MeanPressure;
+            MinPressure = data.MinPressure;
+            MaxPressure = data.MaxPressure;
+            Status = data.Status;
         }
 
         private double currentTemperature;

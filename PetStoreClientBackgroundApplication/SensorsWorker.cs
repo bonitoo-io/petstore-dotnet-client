@@ -1,5 +1,6 @@
 ﻿using BuildAzure.IoT.Adafruit.BME280;
 using MetroLog;
+using PetStoreClientDataModel;
 using Sensors.Dht;
 using System;
 using System.ComponentModel;
@@ -8,17 +9,17 @@ using System.Threading;
 using System.Threading.Tasks;
 using Windows.Devices.Gpio;
 
-namespace PetStoreUWPClient
+namespace PetStoreClientBackgroundApplication
 {
 
-    public class SensorsWorker
+    class SensorsWorker
     {
         private ILogger Log = LogManagerFactory.DefaultLogManager.GetLogger<SensorsWorker>();
         private const int DHT22_Pin = 17;
 
         private BackgroundWorker readingWorker;
-        private BasicData basicData;
-        private DetailData detailData;
+        private OverviewData basicData;
+        private MeasuredData detailData;
         private int readingDelay;
 
         private Bmp180Sensor bmp180;
@@ -35,8 +36,8 @@ namespace PetStoreUWPClient
             readingWorker.WorkerSupportsCancellation = true;
             readingWorker.DoWork += ReadingWorker_DoWork;
             this.readingDelay = delay;
-            basicData = BasicData.GetBasicData();
-            detailData = DetailData.GetDetailData();
+            basicData = OverviewData.GetOverviewData();
+            detailData = MeasuredData.GetMeasuredData();
         }
 
         public async Task Start()
@@ -312,7 +313,7 @@ namespace PetStoreUWPClient
 
     }
 
-    public class StatusUpdatedEventArgs : EventArgs
+    class StatusUpdatedEventArgs
     {
         public string Status { get; set; }
         public StatusUpdatedEventArgs(string status)

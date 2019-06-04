@@ -3,9 +3,9 @@ using System.Threading.Tasks;
 using Windows.Devices.Enumeration;
 using Windows.Devices.I2c;
 
-namespace PetStoreUWPClient
+namespace PetStoreClientBackgroundApplication
 {
-    public class Bmp180Sensor: IDisposable
+    class Bmp180Sensor: IDisposable
     {
         #region Register Addresses
         /// <summary>
@@ -361,7 +361,7 @@ namespace PetStoreUWPClient
     #endregion
 
     #region Calibration Data
-    public class Bmp180CalibrationData
+    class Bmp180CalibrationData
     {
         public short AC1 { get; set; }
         public short AC2 { get; set; }
@@ -375,7 +375,7 @@ namespace PetStoreUWPClient
         public short MC { get; set; }
         public short MD { get; set; }
 
-        public override string ToString()
+        public sealed override string ToString()
         {
             return "{ AC1: " + AC1.ToString("X") +
                    ", AC2: " + AC2.ToString("X") +
@@ -393,7 +393,7 @@ namespace PetStoreUWPClient
     #endregion
 
     #region Sensor Data
-    public class Bmp180SensorData
+    class Bmp180SensorData
     {
         public double Temperature { get; set; }
         public double Pressure { get; set; }

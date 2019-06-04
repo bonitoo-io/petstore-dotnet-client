@@ -1,5 +1,9 @@
 ﻿using MetroLog;
+using PetStoreClientDataModel;
+using System;
 using System.Threading.Tasks;
+using Windows.ApplicationModel.Core;
+using Windows.UI.Core;
 using Windows.UI.Xaml.Controls;
 
 // The Blank Page item template is documented at https://go.microsoft.com/fwlink/?LinkId=234238
@@ -15,32 +19,50 @@ namespace PetStoreUWPClient
         public SettingsPage()
         {
             this.InitializeComponent();
-            ViewModel = new SettingsModel();
+            ViewModel = new SettingsViewModel();
 
             Loaded += SettingsPage_Loaded;
         }
 
-        private void SettingsPage_Loaded(object sender, Windows.UI.Xaml.RoutedEventArgs e)
+        private async void SettingsPage_Loaded(object sender, Windows.UI.Xaml.RoutedEventArgs e)
         {
-            ViewModel.Load();
+            await Task.Run(() =>
+            {
+                try
+                {
+                    ViewModel.Load();
+                }
+                catch (Exception ex)
+                {
+                    Log.Error("Load error", ex);
+                    ViewModel.Status = "Load error: " + ex.Message;
+                }
+
+            });
         }
 
-        public SettingsModel ViewModel { get; set; }
+        public SettingsViewModel ViewModel { get; set; }
 
 
-        private void Save_Click(object sender, Windows.UI.Xaml.RoutedEventArgs e)
+        private async void  Save_Click(object sender, Windows.UI.Xaml.RoutedEventArgs e)
         {
-            var config = Config.GetInstance();
-            var urlChanged = !ViewModel.HubUrl.Equals(config.hubUrl);
-            ViewModel.Save();
-            config.Save();
-            if(urlChanged)
+            await Task.Run(() =>
             {
-#pragma warning disable CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
-                RestartManager();
-#pragma warning restore CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
-            }
-            Close();
+                try
+                {
+                    var config = BackgroundJobClient.GetConfig();
+                    var urlChanged = !ViewModel.HubUrl.Equals(config.HubUrl);
+                    ViewModel.Save(config);
+                    BackgroundJobClient.UpdateConfig(config);
+                    Close();
+                } 
+                catch(Exception ex)
+                {
+                    Log.Error("Save error", ex);
+                    ViewModel.Status = "Save error: " + ex.Message;
+                }
+                
+            });
         }
 
         private void Cancel_Click(object sender, Windows.UI.Xaml.RoutedEventArgs e)
@@ -48,27 +70,35 @@ namespace PetStoreUWPClient
             Close();
         }
 
-        private void Reset_Click(object sender, Windows.UI.Xaml.RoutedEventArgs e)
+        private async void Reset_Click(object sender, Windows.UI.Xaml.RoutedEventArgs e)
         {
-            var config = Config.GetInstance();
-            config.Reset();
-            config.Save();
-#pragma warning disable CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
-            RestartManager();
-#pragma warning restore CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
-            Close();
-
+            await Task.Run(() =>
+            {
+                try
+                {
+                    var config = BackgroundJobClient.GetConfig();
+                    config.Reset();
+                    BackgroundJobClient.UpdateConfig(config);
+                    Close();
+                }
+                catch (Exception ex)
+                {
+                    Log.Error("Reset error", ex);
+                    ViewModel.Status = "Reset error: " + ex.Message;
+                }
+            });
         }
+
 
         private void Close()
         {
-            Frame.Navigate(typeof(BasicPage));
+#pragma warning disable CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
+            CoreApplication.MainView.Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () =>
+            {
+                Frame.Navigate(typeof(BasicPage));
+            });
+#pragma warning restore CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
         }
 
-        private async Task RestartManager()
-        {
-            await WorkersManager.GetWorkersManager().Stop();
-            await WorkersManager.GetWorkersManager().Start();
-        }
     }
 }

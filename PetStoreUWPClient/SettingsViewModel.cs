@@ -1,4 +1,5 @@
-﻿using System;
+﻿using PetStoreClientDataModel;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -6,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace PetStoreUWPClient
 {
-    public class SettingsModel : BindableBase
+    public class SettingsViewModel : BindableBase
     {
 
         private string hubUrl;
@@ -23,18 +24,24 @@ namespace PetStoreUWPClient
             set { SetProperty(ref location, value); }
         }
 
-        public void Load()
+        private string status;
+        public string Status
         {
-            var config = Config.GetInstance();
-            HubUrl = config.hubUrl;
-            Location = config.location;
+            get { return status; }
+            set { SetProperty(ref status, value); }
         }
 
-        public void Save()
+        public void Load()
         {
-            var config = Config.GetInstance();
-            config.hubUrl = HubUrl;
-            config.location = Location;
+            var config = BackgroundJobClient.GetConfig();
+            HubUrl = config.HubUrl;
+            Location = config.Location;
+        }
+
+        public void Save(Config config)
+        {
+            config.HubUrl = HubUrl;
+            config.Location = Location;
         }
     }
 }

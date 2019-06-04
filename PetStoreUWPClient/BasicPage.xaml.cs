@@ -10,35 +10,16 @@ namespace PetStoreUWPClient
     /// </summary>
     public sealed partial class BasicPage : Page
     {
-        public BasicData ViewModel;
+        public OverviewDataViewModel ViewModel;
 
         public BasicPage()
         {
             this.InitializeComponent();
-            ViewModel = BasicData.GetBasicData();
+            ViewModel = OverviewDataViewModel.GetOverviewDataViewModel();
             
-            this.Loaded += BasicPage_Loaded;
-            this.Unloaded += BasicPage_Unloaded;
         }
 
-        private void StatusChanged(object sender, StatusUpdatedEventArgs e)
-        {
-            ViewModel.Status = e.Status;
-        }
-
-        private void BasicPage_Unloaded(object sender, RoutedEventArgs e)
-        {
-            WorkersManager man = WorkersManager.GetWorkersManager();
-            man.StatusChanged -= StatusChanged;
-
-        }
-
-        private async void BasicPage_Loaded(object sender, RoutedEventArgs e)
-        {
-            WorkersManager man = WorkersManager.GetWorkersManager();
-            man.StatusChanged += StatusChanged;
-            await man.Start();
-        }
+       
 
 
         private void Button_Click(object sender, RoutedEventArgs e)

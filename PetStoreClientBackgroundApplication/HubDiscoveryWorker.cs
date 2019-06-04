@@ -7,9 +7,9 @@ using System.Net.Sockets;
 using System.Text;
 using System.Threading;
 
-namespace PetStoreUWPClient
+namespace PetStoreClientBackgroundApplication
 {
-    public class HubDiscoreryResult
+    class HubDiscoreryResult
     {
         public string HubUrl { get; private set; }
         public Exception Error { get; private set; }
@@ -27,7 +27,7 @@ namespace PetStoreUWPClient
         }
     }
 
-    public class HubDiscoveryWorker
+    class HubDiscoveryWorker
     {
         private ILogger Log = LogManagerFactory.DefaultLogManager.GetLogger<HubDiscoveryWorker>();
         private BackgroundWorker hubDiscoveryWorker;
@@ -146,16 +146,16 @@ namespace PetStoreUWPClient
             OnDiscoveryCompleted(result);
 
         }
-        protected void OnDiscoveryCompleted(HubDiscoreryResult hubDiscoreryResult)
+        void OnDiscoveryCompleted(HubDiscoreryResult hubDiscoreryResult)
         {
             DiscoveryCompleted?.Invoke(this, new HubDisoveryCompletedEventArgs(hubDiscoreryResult));
         }
 
-        public event EventHandler<HubDisoveryCompletedEventArgs> DiscoveryCompleted;
+        internal event EventHandler<HubDisoveryCompletedEventArgs> DiscoveryCompleted;
 
     }
 
-    public class HubDisoveryCompletedEventArgs : EventArgs
+    class HubDisoveryCompletedEventArgs : EventArgs
     {
         public HubDiscoreryResult Result { get; private set; }
         public HubDisoveryCompletedEventArgs(HubDiscoreryResult hubDiscoreryResult)

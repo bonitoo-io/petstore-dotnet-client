@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "PetStoreConsoleClient": {
+      "commandName": "Project",
+      "commandLineArgs": "-host 192.168.88.218 -view-config -view-data"
+    }
+  }
+}

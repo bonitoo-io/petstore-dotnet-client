@@ -1,6 +1,7 @@
 ﻿using InfluxDB.Client;
 using InfluxDB.Client.Writes;
 using MetroLog;
+using PetStoreClientDataModel;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -10,9 +11,9 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace PetStoreUWPClient
+namespace PetStoreClientBackgroundApplication
 {
-    public class InfluxDbWorker
+    class InfluxDbWorker
     {
         private ILogger Log = LogManagerFactory.DefaultLogManager.GetLogger<InfluxDbWorker>();
         private BackgroundWorker dbWorker;
@@ -66,13 +67,13 @@ namespace PetStoreUWPClient
 
         private void InitializeDb()
         {
-            var dbConfig = Config.GetInstance();
+            var dbConfig = WorkersManager.GetWorkersManager().Config;
             if (dBClient == null && dbConfig.IsDbConfigAvailable())
             {
                 try
                 {
                     Log.Trace("InfluxDbWorker:InitializeDb");
-                    dBClient = InfluxDBClientFactory.Create(dbConfig.url, dbConfig.authToken.ToCharArray());
+                    dBClient = InfluxDBClientFactory.Create(dbConfig.Url, dbConfig.AuthToken.ToCharArray());
                     dBClient.Ready();
                 }
                 catch (Exception ex)
@@ -91,11 +92,11 @@ namespace PetStoreUWPClient
                 try
                 {
                     Log.Trace("InfluxDbWorker:WriteToDb");
-                    var data = BasicData.GetBasicData();
-                    var dbConfig = Config.GetInstance();
+                    var data = OverviewData.GetOverviewData();
+                    var dbConfig = WorkersManager.GetWorkersManager().Config;
                     var point = Point.Measurement("air")
-                        .Tag("location", dbConfig.location != null ? dbConfig.location : "prosek")
-                        .Tag("device_id", dbConfig.deviceId);
+                        .Tag("location", dbConfig.Location != null ? dbConfig.Location : "prosek")
+                        .Tag("device_id", dbConfig.DeviceId);
                     int validFields = 0;
                     if (data.CurrentTemperature != double.NaN) {
                         point.Field("temperature", data.CurrentTemperature);
@@ -113,7 +114,7 @@ namespace PetStoreUWPClient
                     if (validFields > 0)
                     {
                         var writeClient = dBClient.GetWriteApi();
-                        writeClient.WritePoint(dbConfig.bucket, dbConfig.orgId, point);
+                        writeClient.WritePoint(dbConfig.Bucket, dbConfig.OrgId, point);
                         writeClient.Flush();
                     } else
                     {
@@ -134,7 +135,7 @@ namespace PetStoreUWPClient
             {
                 try
                 {
-                    var data = BasicData.GetBasicData();
+                    var data = OverviewData.GetOverviewData();
                     double val = GetQueryResult("temperature", "mean");
                     if(val != double.NaN)
                     {
@@ -193,9 +194,9 @@ namespace PetStoreUWPClient
 
         private double GetQueryResult(string field, string function)
         {
-            var dbConfig = Config.GetInstance();
-            var location = dbConfig.location != null ? dbConfig.location : "prosek";
-            var fluxTables = dBClient.GetQueryApi().Query(string.Format(FluxQueryTemplate, dbConfig.bucket, field, location, function), dbConfig.orgId);
+            var dbConfig = WorkersManager.GetWorkersManager().Config;
+            var location = dbConfig.Location != null ? dbConfig.Location : "prosek";
+            var fluxTables = dBClient.GetQueryApi().Query(string.Format(FluxQueryTemplate, dbConfig.Bucket, field, location, function), dbConfig.OrgId);
             object value = null;
             fluxTables.ForEach(fluxTable =>
             {
