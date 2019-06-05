@@ -2,7 +2,7 @@
   "profiles": {
     "PetStoreConsoleClient": {
       "commandName": "Project",
-      "commandLineArgs": "-host 192.168.88.218 -view-config -view-data"
+      "commandLineArgs": "-host 192.168.88.218 -view-config -set-location Praha-Prosek  -view-config"
     }
   }
 }
