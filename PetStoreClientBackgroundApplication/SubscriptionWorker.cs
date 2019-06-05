@@ -23,6 +23,7 @@ namespace PetStoreClientBackgroundApplication
         private BackgroundWorker subscriptionWorker;
         private string hubUrl;
         private int delay;
+        private int originalDelay;
         private SubscriptionStatus lastStatus;
 
         public bool Running { get; private set; }
@@ -33,6 +34,7 @@ namespace PetStoreClientBackgroundApplication
         {
             this.hubUrl = hubUrl;
             this.delay = delay;
+            originalDelay = delay;
             lastStatus = SubscriptionStatus.None;
             subscriptionWorker = new BackgroundWorker();
             subscriptionWorker.WorkerSupportsCancellation = true;
@@ -84,6 +86,12 @@ namespace PetStoreClientBackgroundApplication
                 status = SubscriptionStatus.Error;
                 ErrorString = "Subscription error: " + response.ErrorException.Message;
                 Log.Error("Subscribe Error: ", response.ErrorException);
+                //probably temporarly net or server error, prolong delay
+                if(delay == originalDelay)
+                {
+                    delay *= 5;
+                    Log.Info($"Prolonging delay to {delay}");
+                }
             }
             else
             {
@@ -106,6 +114,11 @@ namespace PetStoreClientBackgroundApplication
                         ErrorString = "Uknown response: " + response.StatusCode.ToString();
                         break;
 
+                }
+                if(delay != originalDelay)
+                {
+                    delay = originalDelay;
+                    Log.Info($"Restoring delay to {delay}");
                 }
 
             }
