@@ -14,8 +14,7 @@ namespace PetStoreConsoleClient
                 {
                     if (args[i] == "-h")
                     {
-                        Console.WriteLine("Args: -h, -host <ip|hostname>,-view-config,-view-data,-set-location <location>");
-                        break;
+                        PrintHelp();
                     }
                     else if (args[i] == "-host")
                     {
@@ -61,9 +60,16 @@ namespace PetStoreConsoleClient
             {
                 Console.WriteLine(ex);
             }
+            if(args.Length == 0)
+            {
+                PrintHelp();
+            }
 
         }
-
+        static void PrintHelp()
+        {
+            Console.WriteLine("Args: -h, -host <ip|hostname>,-view-config,-view-data,-set-location <location>");
+        }
         static void PrintOverviewData(OverviewData data)
         {
             Console.WriteLine($"Overview data:");
