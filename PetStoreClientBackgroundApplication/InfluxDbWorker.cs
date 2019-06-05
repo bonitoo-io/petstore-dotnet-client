@@ -19,12 +19,14 @@ namespace PetStoreClientBackgroundApplication
         private BackgroundWorker dbWorker;
         private InfluxDBClient dBClient;
         private int delay;
+        private int originalDelay;
 
         public bool Running { get; private set; }
 
         public InfluxDbWorker(int delay = 30000)
         {
             this.delay = delay;
+            originalDelay = delay;
             dbWorker = new BackgroundWorker();
             dbWorker.WorkerSupportsCancellation = true;
             dbWorker.DoWork += DbWorker_DoWork;
@@ -113,9 +115,16 @@ namespace PetStoreClientBackgroundApplication
                     }
                     if (validFields > 0)
                     {
-                        var writeClient = dBClient.GetWriteApi();
-                        writeClient.WritePoint(dbConfig.Bucket, dbConfig.OrgId, point);
-                        writeClient.Flush();
+                        using (var writeClient = dBClient.GetWriteApi())
+                        {
+                            writeClient.WritePoint(dbConfig.Bucket, dbConfig.OrgId, point);
+                            writeClient.Flush();
+                        }
+                        if (delay != originalDelay)
+                        {
+                            delay = originalDelay;
+                            Log.Info($"Restoring delay to {delay}");
+                        }
                     } else
                     {
                         Log.Debug("InfluxDbWorker:WriteToDb - nothing to write, all values are invalid");
@@ -125,6 +134,13 @@ namespace PetStoreClientBackgroundApplication
                 {
                     Log.Error("Db Write error", ex);
                     OnStatusChanged("DB Write Error: " + ex.Message);
+                    //probably temporarly net down or db error, prolong delay to not overload with exception
+                    if(delay == originalDelay)
+                    {
+                        delay *= 5;
+                        Log.Info($"Prolonging delay to {delay}");
+                    }
+
                 }
             }
         }
