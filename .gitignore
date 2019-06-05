@@ -18,5 +18,5 @@ TEST_LOG*.*
 *.user
 /PetStoreClientBackgroundApplication/AppPackages
 /PetStoreClientBackgroundApplication/BundleArtifacts
-/PetStoreUWPClient/AppPackages/PetStoreUWPClient_0.9.2.0_Debug_Test
 /PetStoreUWPClient/BundleArtifacts
+/PetStoreUWPClient/AppPackages/
