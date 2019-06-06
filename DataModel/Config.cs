@@ -79,6 +79,11 @@ namespace PetStoreClientDataModel
 
         public void Update(Config other)
         {
+            Url = other.Url;
+            OrgId = other.OrgId;
+            Bucket = other.Bucket;
+            AuthToken = other.AuthToken;
+            DeviceId = other.DeviceId;
             HubUrl = other.HubUrl;
             Location = other.Location;
             SensorsPeriod = other.SensorsPeriod;
