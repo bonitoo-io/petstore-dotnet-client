@@ -17,7 +17,8 @@ namespace PetStoreClientBackgroundApplication
     {
         private ILogger Log = LogManagerFactory.DefaultLogManager.GetLogger<InfluxDbWorker>();
         private BackgroundWorker dbWorker;
-        private InfluxDBClient dBClient;
+        private InfluxDBClient dbClient;
+        private QueryApi dbQueryApi;
         private int delay;
         private int originalDelay;
 
@@ -52,7 +53,7 @@ namespace PetStoreClientBackgroundApplication
             Running = true;
             while (!dbWorker.CancellationPending)
             {
-                if (dBClient != null)
+                if (dbClient != null)
                 {
                     WriteToDb();
                     ReadFromDb();
@@ -70,13 +71,15 @@ namespace PetStoreClientBackgroundApplication
         private void InitializeDb()
         {
             var dbConfig = WorkersManager.GetWorkersManager().Config;
-            if (dBClient == null && dbConfig.IsDbConfigAvailable())
+            if (dbClient == null && dbConfig.IsDbConfigAvailable())
             {
                 try
                 {
                     Log.Trace("InfluxDbWorker:InitializeDb");
-                    dBClient = InfluxDBClientFactory.Create(dbConfig.Url, dbConfig.AuthToken.ToCharArray());
-                    dBClient.Ready();
+                    dbClient = InfluxDBClientFactory.Create(dbConfig.Url, dbConfig.AuthToken.ToCharArray());
+                    dbClient.Health();
+                    dbQueryApi = dbClient.GetQueryApi();
+
                 }
                 catch (Exception ex)
                 {
@@ -86,40 +89,57 @@ namespace PetStoreClientBackgroundApplication
             }
         }
 
+        private void DbWriteApi_EventHandler(object sender, EventArgs e)
+        {
+            if (e is WriteErrorEvent errorEvent)
+            {
+                Log.Error("Write Error", errorEvent.Exception);
+                OnStatusChanged("DB Write Error: " + errorEvent.Exception.Message);
+                if (delay == originalDelay)
+                {
+                    delay *= 5;
+                    Log.Info($"Prolonging delay to {delay}");
+                }
+            }
+        }
+
         private void WriteToDb()
         {
 
-            if (dBClient != null)
+            if (dbClient != null)
             {
                 try
                 {
-                    Log.Trace("InfluxDbWorker:WriteToDb");
+                    Log.Trace("WriteToDb");
                     var data = OverviewData.GetOverviewData();
                     var dbConfig = WorkersManager.GetWorkersManager().Config;
                     var point = Point.Measurement("air")
                         .Tag("location", dbConfig.Location != null ? dbConfig.Location : "prosek")
                         .Tag("device_id", dbConfig.DeviceId);
                     int validFields = 0;
-                    if (data.CurrentTemperature != double.NaN) {
+                    if (!double.IsNaN(data.CurrentTemperature)) {
                         point.Field("temperature", data.CurrentTemperature);
                         ++validFields;
                     }
-                    if (data.CurrentPressure != double.NaN)
+                    if (!double.IsNaN(data.CurrentPressure))
                     {
                         point.Field("pressure", data.CurrentPressure);
                         ++validFields;
                     }
-                    if (data.CurrentHumidity != double.NaN) { 
+                    if (!double.IsNaN(data.CurrentHumidity)) {
+                        
                         point.Field("humidity", data.CurrentHumidity);
                         ++validFields;
                     }
                     if (validFields > 0)
                     {
-                        using (var writeClient = dBClient.GetWriteApi())
+                        using (var dbWriteApi = dbClient.GetWriteApi())
                         {
-                            writeClient.WritePoint(dbConfig.Bucket, dbConfig.OrgId, point);
-                            writeClient.Flush();
+                            dbWriteApi.EventHandler += DbWriteApi_EventHandler;
+                            dbWriteApi.WritePoint(dbConfig.Bucket, dbConfig.OrgId, point);
+                            dbWriteApi.Flush();
                         }
+                        
                         if (delay != originalDelay)
                         {
                             delay = originalDelay;
@@ -147,10 +167,11 @@ namespace PetStoreClientBackgroundApplication
         private const string FluxQueryTemplate = "from(bucket: \"{0}\") |> range(start: -24h, stop: now()) |> filter(fn: (r) => r._measurement == \"air\" and r._field == \"{1}\" and r.location == \"{2}\") |> aggregateWindow(every: 24h, fn: {3}, createEmpty: false)";
         private void ReadFromDb()
         {
-            if (dBClient != null)
+            if (dbQueryApi != null)
             {
                 try
                 {
+                    Log.Trace("ReadFromDb");
                     var data = OverviewData.GetOverviewData();
                     double val = GetQueryResult("temperature", "mean");
                     if(val != double.NaN)
@@ -211,15 +232,15 @@ namespace PetStoreClientBackgroundApplication
         private double GetQueryResult(string field, string function)
         {
             var dbConfig = WorkersManager.GetWorkersManager().Config;
-            var location = dbConfig.Location != null ? dbConfig.Location : "prosek";
-            var fluxTables = dBClient.GetQueryApi().Query(string.Format(FluxQueryTemplate, dbConfig.Bucket, field, location, function), dbConfig.OrgId);
+            var location = dbConfig.Location != null ? dbConfig.Location : "unknown";
+            var fluxTables = dbQueryApi.Query(string.Format(FluxQueryTemplate, dbConfig.Bucket, field, location, function), dbConfig.OrgId).GetAwaiter().GetResult();
             object value = null;
             fluxTables.ForEach(fluxTable =>
             {
                 var fluxRecords = fluxTable.Records;
                 fluxRecords.ForEach(fluxRecord =>
                 {
-                   Log.Debug($"GetQueryResul: {fluxRecord.GetTime()}: {fluxRecord.GetValue()}");
+                   //Log.Debug($"GetQueryResul: {fluxRecord.GetTime()}: {fluxRecord.GetValue()}");
                    value = (double)fluxRecord.GetValue();
                 });
             });
@@ -236,9 +257,14 @@ namespace PetStoreClientBackgroundApplication
 
         private void DbWorker_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
         {
-           Log.Trace("InfluxDbWorker:RunWorkerComplete");
-            dBClient.Dispose();
-            dBClient = null;
+            Log.Trace("InfluxDbWorker:RunWorkerComplete");
+            dbQueryApi = null;
+            if (dbClient != null)
+            {
+                dbClient.Dispose();
+                dbClient = null;
+            }
+
         }
 
         protected void OnStatusChanged(string status)
