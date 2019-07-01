@@ -12,7 +12,7 @@ Application consists of 3 main modules:
  - [.NET Core console application](PetStoreConsoleClient) - displays measured and statistical data in console. Allows also configuration.
 
 ## Installation
-1. Dowload latest binaries from the [../../releases](releases)
+1. Dowload latest binaries from the [releases](../../releases)
 1. Goto the Windows 10 IoT Core web console
 1. In the `Apps` section use Choose File and select PetStoreClientBackgroundApplication_<version>_arm_Debug.appxbundle
 1. Check `Allow me to select framework packages`
