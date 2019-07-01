@@ -46,7 +46,7 @@ namespace PetStoreClientBackgroundApplication
             {
                 Log.Fatal("Unexped exception", ex);
             }
-            Log.Trace("Stopped");
+            Log.Info("Stopped");
         }
 
         private static string GetAppVersion()
@@ -61,7 +61,7 @@ namespace PetStoreClientBackgroundApplication
         private void TaskInstance_Canceled(IBackgroundTaskInstance sender, BackgroundTaskCancellationReason reason)
         {
             man.Stop().GetAwaiter().GetResult();
-            Log.Trace("Canceled");
+            Log.Info("Canceled");
         }
     }
 }

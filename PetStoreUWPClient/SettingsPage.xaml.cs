@@ -46,6 +46,7 @@ namespace PetStoreUWPClient
 
         private async void  Save_Click(object sender, Windows.UI.Xaml.RoutedEventArgs e)
         {
+            Log.Trace("Save");
             await Task.Run(() =>
             {
                 try
@@ -72,6 +73,7 @@ namespace PetStoreUWPClient
 
         private async void Reset_Click(object sender, Windows.UI.Xaml.RoutedEventArgs e)
         {
+            Log.Trace("Reset");
             await Task.Run(() =>
             {
                 try

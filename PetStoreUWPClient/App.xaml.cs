@@ -45,7 +45,7 @@ namespace PetStoreUWPClient
             // setup the global crash handler...
             GlobalCrashHandler.Configure();
             Log = LogManagerFactory.DefaultLogManager.GetLogger<App>();
-            Log.Trace("Init");
+            Log.Info($"Started PestoreUWPClient {GetAppVersion()}");
         }
 
         private void OnUnhandledException(object sender, Windows.UI.Xaml.UnhandledExceptionEventArgs e)
@@ -116,10 +116,19 @@ namespace PetStoreUWPClient
         /// <param name="e">Details about the suspend request.</param>
         private void OnSuspending(object sender, SuspendingEventArgs e)
         {
-            Log.Trace("Suspending");
+            Log.Info("Suspending");
             var deferral = e.SuspendingOperation.GetDeferral();
             //TODO: Save application state and stop any background activity
             deferral.Complete();
+        }
+
+        private static string GetAppVersion()
+        {
+            Package package = Package.Current;
+            PackageId packageId = package.Id;
+            PackageVersion version = packageId.Version;
+
+            return string.Format("{0}.{1}.{2}", version.Major, version.Minor, version.Build);
         }
     }
 }

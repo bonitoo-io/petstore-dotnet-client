@@ -53,7 +53,7 @@ namespace PetStoreClientBackgroundApplication
 
         private async Task<bool> InitSensors()
         {
-            Log.Trace("SensorsWorker:InitSensors start");
+            Log.Info("Initializing sensors");
             OnStatusChanged("Initialising sensors");
             // Initialize the BMP180 Sensor
             try
@@ -133,7 +133,7 @@ namespace PetStoreClientBackgroundApplication
             }
             OnStatusChanged(status);
             await Task.Delay(500);
-            Log.Trace($"SensorsWorker:InitSensors end");
+            Log.Trace($"end");
             Log.Info(status);
             return bmp180 != null || bme280 != null || dhtSensor != null;
             
@@ -141,7 +141,7 @@ namespace PetStoreClientBackgroundApplication
 
         private void ReadingWorker_DoWork(object sender, DoWorkEventArgs e)
         {
-            Log.Trace("SensorWorker:ReadingWorker started");
+            Log.Info("Starting worker");
             Running = true;
             while (!readingWorker.CancellationPending)
             {
@@ -154,7 +154,7 @@ namespace PetStoreClientBackgroundApplication
             }
             DeinitSensors();
             Running = false;
-            Log.Trace("SensorWorker:ReadingWorker stopped");
+            Log.Info("Stopped");
         }
 
         private void DeinitSensors()
@@ -188,7 +188,7 @@ namespace PetStoreClientBackgroundApplication
             int humCount = 0;
             int presCount = 0;
 
-            Log.Trace("SensorsWorker:ReadData");
+            Log.Info("ReadData");
             // Read and format Sensor data
             try
             {

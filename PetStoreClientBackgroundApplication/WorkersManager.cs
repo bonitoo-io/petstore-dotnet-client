@@ -56,7 +56,7 @@ namespace PetStoreClientBackgroundApplication
         {
             if (!running)
             {
-                Log.Trace("WorkersManager:Start");
+                Log.Info("Starting workers manager");
                 OnStatusChanged("Starting..");
                 await StartSensorsReading();
 
@@ -81,7 +81,7 @@ namespace PetStoreClientBackgroundApplication
         {
             if (running)
             {
-                Log.Trace("WorkersManager:Stop");
+                Log.Info("Stopping Workers Manager:");
                 OnStatusChanged("Stopping workers");
                 StopDbWorker();
                 StopSubscriptionWorker();
@@ -246,6 +246,7 @@ namespace PetStoreClientBackgroundApplication
                 }
                 else
                 {
+                    Log.Trace("Starting db");
                     StartDbWorker();
                 }
             } 

@@ -49,7 +49,7 @@ namespace PetStoreClientBackgroundApplication
 
         private void DbWorker_DoWork(object sender, DoWorkEventArgs e)
         {
-            Log.Trace("InfluxDbWorker:Started");
+            Log.Info("tarted");
             Running = true;
             while (!dbWorker.CancellationPending)
             {
@@ -65,7 +65,7 @@ namespace PetStoreClientBackgroundApplication
                 e.Cancel = true;
             }
             Running = false;
-            Log.Trace("InfluxDbWorker:Stopped");
+            Log.Trace("Stopped");
         }
 
         private void InitializeDb()
@@ -75,7 +75,7 @@ namespace PetStoreClientBackgroundApplication
             {
                 try
                 {
-                    Log.Trace("InfluxDbWorker:InitializeDb");
+                    Log.Info("InitializeDb");
                     dbClient = InfluxDBClientFactory.Create(dbConfig.Url, dbConfig.AuthToken.ToCharArray());
                     dbClient.Health();
                     dbQueryApi = dbClient.GetQueryApi();

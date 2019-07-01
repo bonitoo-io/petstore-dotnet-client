@@ -54,6 +54,7 @@ namespace PetStoreClientBackgroundApplication
 
         private void ReadingWorker_DoWork(object sender, DoWorkEventArgs e)
         {
+            Log.Info("Started");
             Running = true;
             while (!subscriptionWorker.CancellationPending)
             {
@@ -65,6 +66,7 @@ namespace PetStoreClientBackgroundApplication
                 e.Cancel = true;
             }
             Running = false;
+            Log.Info("Stopped");
         }
 
         private void Subscribe()
@@ -72,7 +74,7 @@ namespace PetStoreClientBackgroundApplication
             var status = SubscriptionStatus.None;
             //todo: url to ui
             RestClient hubClient = new RestClient(hubUrl);
-            Log.Trace("SubscriptionWorker:Subscribe");
+            Log.Info("Subscription check");
 
             var request = new RestRequest("register/{id}", Method.GET);
             //equest.AddUrlSegment("id", "1234-5678-9012-3456"); // replaces matching token in request.Resource
@@ -95,7 +97,7 @@ namespace PetStoreClientBackgroundApplication
             }
             else
             {
-                Log.Debug("SubscriptionWorker:Subscribe:statusCode: " + (int)response.StatusCode);
+                Log.Debug("statusCode: " + (int)response.StatusCode);
                 switch (response.StatusCode)
                 {
                     case System.Net.HttpStatusCode.OK:

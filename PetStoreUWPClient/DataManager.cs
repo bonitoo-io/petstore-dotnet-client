@@ -26,7 +26,7 @@ namespace PetStoreUWPClient
 
         private void Run(object sender, DoWorkEventArgs e)
         {
-            Log.Trace("Started");
+            Log.Info("Started");
             while(!backroundWorker.CancellationPending)
             {
                 try
@@ -44,7 +44,7 @@ namespace PetStoreUWPClient
             {
                 e.Cancel = true;
             }
-            Log.Trace("Stopped");
+            Log.Info("Stopped");
 
         }
 

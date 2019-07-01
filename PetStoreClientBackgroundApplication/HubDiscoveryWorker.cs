@@ -58,7 +58,7 @@ namespace PetStoreClientBackgroundApplication
 
         private void HubDiscoveryWorker_DoWork(object sender, DoWorkEventArgs e)
         {
-            Log.Trace("HubDiscoveryWorker:Started");
+            Log.Info("Started");
             Running = true;
             Socket socket = null;
             var buffer = new byte[1024];
@@ -77,7 +77,7 @@ namespace PetStoreClientBackgroundApplication
                 socket.Bind(endPoint);
                 socket.SetSocketOption(SocketOptionLevel.IP, SocketOptionName.AddMembership, new MulticastOption(GroupAddress, ipAddress));
 
-                Log.Info("HubDiscoveryWorker:Waiting for broadcast");
+                Log.Debug("HubDiscoveryWorker:Waiting for broadcast");
                 while (!hubDiscoveryWorker.CancellationPending)
                 {
 
@@ -137,7 +137,7 @@ namespace PetStoreClientBackgroundApplication
             }
 
             Running = true;
-            Log.Trace("HubDiscoveryWorker:Stopped");
+            Log.Info("Stopped");
         }
 
         private void HubDiscoveryWorker_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)

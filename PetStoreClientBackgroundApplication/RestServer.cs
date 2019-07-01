@@ -31,7 +31,7 @@ namespace PetStoreClientBackgroundApplication
 
             var httpServer = new HttpServer(configuration);
             await httpServer.StartServerAsync();
-            Log.Trace("started");
+            Log.Info("started");
             // now make sure the app won't stop after this (eg use a BackgroundTaskDeferral)
         }
     }
@@ -43,7 +43,7 @@ namespace PetStoreClientBackgroundApplication
         [UriFormat("/config")]
         public IGetResponse GetConfig()
         {
-            Log.Trace("Get config reuest");
+            Log.Info("GetConfig");
             return new GetResponse(
               GetResponse.ResponseStatus.OK,
                WorkersManager.GetWorkersManager().Config);
@@ -51,7 +51,8 @@ namespace PetStoreClientBackgroundApplication
         [UriFormat("/config")]
         public IPutResponse UpdateConfig([FromContent]Config data)
         {
-            Log.Debug($"UpdateConfig with: {data}");
+            Log.Info("UpdateConfig");
+            Log.Debug($"Data: {data}");
             var config = WorkersManager.GetWorkersManager().Config;
             var urlChanged = !data.HubUrl.Equals(config.HubUrl) || !data.Url.Equals(config.Url);
             config.Update(data);
@@ -73,6 +74,7 @@ namespace PetStoreClientBackgroundApplication
         [UriFormat("/data/overview")]
         public IGetResponse GetOverviewData()
         {
+            Log.Trace("GetOverviewData");
             return new GetResponse(
               GetResponse.ResponseStatus.OK,
                OverviewData.GetOverviewData());
@@ -86,6 +88,7 @@ namespace PetStoreClientBackgroundApplication
         [UriFormat("/data/meassured")]
         public IGetResponse GetMeasuredData()
         {
+            Log.Trace("GetMeasuredData");
             return new GetResponse(
               GetResponse.ResponseStatus.OK,
                MeasuredData.GetMeasuredData());
